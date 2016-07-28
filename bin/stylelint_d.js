@@ -8,7 +8,7 @@ var SOCKET_FILE = '/tmp/stylelint_d.sock';
 
 // Start or return server connection
 getServerConn().then(function(conn) {
-  var args = process.argv.slice(2)[0];
+  var args = process.argv.slice(-1)[0];
 
   // If it's a start command, we handle it here
   if (args === 'start') {
@@ -19,7 +19,9 @@ getServerConn().then(function(conn) {
 
   var data = [];
 
-  conn.write(args);
+  // We write both the cwd and the potential filename, in
+  // case we are given a relative path
+  conn.write(JSON.stringify([ process.cwd(), args ]));
   conn.on('data', function(d) {
     data.push(d.toString('utf8'));
   });
@@ -33,7 +35,7 @@ getServerConn().then(function(conn) {
       output = data.join('');
     }
 
-    console.log(output);
+    process.stdout.write(output.output);
   });
 }).catch(function(err) {
   console.log(err);
