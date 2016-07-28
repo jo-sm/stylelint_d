@@ -13,6 +13,7 @@ getServerConn().then(function(conn) {
   // If it's a start command, we handle it here
   if (args === 'start') {
     // The server has already started by virtue of getServerConn
+    console.log('stylelint_d started');
     conn.end();
     return;
   }
@@ -31,11 +32,12 @@ getServerConn().then(function(conn) {
 
     try {
       output = JSON.parse(data.join(''));
+      output = output.output;
     } catch(e) {
       output = data.join('');
     }
 
-    process.stdout.write(output.output);
+    console.log(output);
   });
 }).catch(function(err) {
   console.log(err);
@@ -60,7 +62,7 @@ function getServerConn() {
       // Wait for server to spawn and socket to connect
       waitForSocket().then(function(socket) {
         resolve(socket);
-      })
+      }).catch(reject);
     });
 
     socket.once('connect', function() {
@@ -78,18 +80,16 @@ function waitForSocket() {
     var counter = 0;
 
     var wait = function() {
-      counter++;
-
-      if (counter >= 10) {
-        return reject(new Error('Could not connect to stylelint_d socket'));
-      }
-
       var socket = new net.Socket({});
-      socket.once('error', wait);
+      socket.once('error', function() {
+        setTimeout(wait, 100);
+      });
       socket.once('connect', function() {
         resolve(socket);
       });
       socket.connect({ path: SOCKET_FILE });
     }
+
+    wait();
   });
 }
