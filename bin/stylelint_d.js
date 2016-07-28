@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 var fs = require('fs');
 var net = require('net');
 var spawn = require('child_process').spawn;
