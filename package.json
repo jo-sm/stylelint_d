@@ -1,0 +1,27 @@
+{
+  "name": "stylelint_d",
+  "version": "1.0.0",
+  "description": "Long running Stylelint daemon",
+  "bin": "bin/stylelint_d.js",
+  "dependencies": {
+    "stylelint": "^7.0.3",
+    "glob": "^7.0.5"
+  },
+  "devDependencies": {},
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jo-sm/stylelint_d.git"
+  },
+  "author": "Joshua Smock",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/jo-sm/stylelint_d/issues"
+  },
+  "homepage": "https://github.com/jo-sm/stylelint_d#readme",
+  "files": [
+    "bin",
+    "lib",
+    "README.md",
+    "LICENSE.txt"
+  ]
+}
