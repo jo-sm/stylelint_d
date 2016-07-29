@@ -4,14 +4,22 @@ var fs = require('fs');
 var net = require('net');
 var spawn = require('child_process').spawn;
 
+var packageJson = require('../package.json');
+
 var SOCKET_FILE = '/tmp/stylelint_d.sock';
+
+var arg = process.argv.slice(-1)[0];
+
+// If version, show current package.json version
+if (arg === '--version' || arg === '-v') {
+  console.log(packageJson.version);
+  return;
+}
 
 // Start or return server connection
 getServerConn().then(function(conn) {
-  var args = process.argv.slice(-1)[0];
-
   // If it's a start command, we handle it here
-  if (args === 'start') {
+  if (arg === 'start') {
     // The server has already started by virtue of getServerConn
     console.log('stylelint_d started');
     conn.end();
@@ -22,7 +30,7 @@ getServerConn().then(function(conn) {
 
   // We write both the cwd and the potential filename, in
   // case we are given a relative path
-  conn.write(JSON.stringify([ process.cwd(), args ]));
+  conn.write(JSON.stringify([ process.cwd(), arg ]));
   conn.on('data', function(d) {
     data.push(d.toString('utf8'));
   });
