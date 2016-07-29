@@ -8,7 +8,8 @@ var packageJson = require('../package.json');
 
 var SOCKET_FILE = '/tmp/stylelint_d.sock';
 
-var arg = process.argv.slice(-1)[0];
+var args = process.argv.slice(2);
+var arg = args[0];
 
 // If version, show current package.json version
 if (arg === '--version' || arg === '-v') {
@@ -30,7 +31,7 @@ getServerConn().then(function(conn) {
 
   // We write both the cwd and the potential filename, in
   // case we are given a relative path
-  conn.write(JSON.stringify([ process.cwd(), arg ]));
+  conn.write(JSON.stringify([ process.cwd(), args ]) + "\r\n");
   conn.on('data', function(d) {
     data.push(d.toString('utf8'));
   });
