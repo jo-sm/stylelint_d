@@ -1,6 +1,6 @@
 # stylelint_d
 
-`stylelint_d` is a long running `stylelint` daemon that makes CSS linting much faster compared to the `stylelint` CLI. Instead of starting a Node process each time you lint, which can take 700ms+, this creates a server which listens for filenames (as well as a few commands) and lints the given files, returning the output to the client. The main use case is for code editors or linting processes that are time dependent.
+`stylelint_d` is a long running `stylelint` daemon that makes CSS linting much faster compared to the `stylelint` CLI. Instead of starting a Node process each time you lint, which is slow and can take 700ms+, this creates a server which listens for filenames (as well as a few commands) and lints the given files, returning the output to the client significantly faster, in 100-150ms. The main use case is for code editors or linting processes that are time dependent.
 
 Thanks to [eslint_d](https://github.com/mantoni/eslint_d.js) by [Maximilian Antoni](https://github.com/mantoni) for the idea!
 
