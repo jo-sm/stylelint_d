@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 var fs = require('fs');
+var minimist = require('minimist');
 var net = require('net');
 var spawn = require('child_process').spawn;
 
@@ -8,49 +9,80 @@ var packageJson = require('../package.json');
 
 var SOCKET_FILE = '/tmp/stylelint_d.sock';
 
-var args = process.argv.slice(2);
-var arg = args[0];
+var args = minimist(process.argv.slice(2));
 
 // If version, show current package.json version
-if (arg === '--version' || arg === '-v') {
+if (args.version || args.v) {
   console.log(packageJson.version);
   return;
 }
 
-// Start or return server connection
-getServerConn().then(function(conn) {
-  // If it's a start command, we handle it here
-  if (arg === 'start') {
-    // The server has already started by virtue of getServerConn
-    console.log('stylelint_d started');
-    conn.end();
+var stdin = '';
+var filename = args.file || args.f;
+var config = args.config || args.c;
+
+if (args.stdin) {
+  if (!filename && !config) {
+    console.log('Error: --stdin requires --config or --file flags');
     return;
   }
 
-  var data = [];
+  process.stdin.on('readable', function() {
+    var chunk = process.stdin.read();
 
-  // We write both the cwd and the potential filename, in
-  // case we are given a relative path
-  conn.write(JSON.stringify([ process.cwd(), args ]) + "\r\n");
-  conn.on('data', function(d) {
-    data.push(d.toString('utf8'));
+    if (chunk !== null) {
+      stdin += chunk;
+    }
   });
 
-  conn.on('end', function() {
-    var output;
+  process.stdin.on('end', function() {
+    args.stdin = stdin;
+    args.files = [ filename ];
+    lint(args);
+  });
+} else {
+  args.files = args._;
+  lint(args);
+}
 
-    try {
-      output = JSON.parse(data.join(''));
-      output = output.output;
-    } catch(e) {
-      output = data.join('');
+function lint(args) {
+  var command = args._[0];
+
+  // Start or return server connection
+  getServerConn().then(function(conn) {
+    // If it's a start command, we handle it here
+    if (command === 'start') {
+      // The server has already started by virtue of getServerConn
+      console.log('stylelint_d started');
+      conn.end();
+      return;
     }
 
-    console.log(output);
+    var data = [];
+
+    // We write both the cwd and the potential filename, in
+    // case we are given a relative path
+    conn.write(JSON.stringify([ process.cwd(), args ]) + "\r\n");
+    conn.on('data', function(d) {
+      data.push(d.toString('utf8'));
+    });
+
+    conn.on('end', function() {
+      var output;
+
+      try {
+        output = JSON.parse(data.join(''));
+        output = output.output;
+      } catch(e) {
+        output = data.join('');
+      }
+
+      console.log(output);
+    });
+  }).catch(function(err) {
+    console.log(err);
   });
-}).catch(function(err) {
-  console.log(err);
-});
+}
 
 function getServerConn() {
   var promise = new Promise(function(resolve, reject) {
