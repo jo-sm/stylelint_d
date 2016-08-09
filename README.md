@@ -28,9 +28,16 @@ To lint a file, run:
 > stylelint_d <path/to/css/**/*.css>
 ```
 
-It will automatically find your `stylelint` configuration based on the path of the file. Note that the first time you run the linter, it may take a moment to start node, but afterwards it will be much faster. 
+It will automatically find your `stylelint` configuration based on the path of the file. You can also optionally pass the `--config` or `-c` flag to denote the config file location. Note that the first time you run the linter, it may take a moment to start node, but afterwards it will be much faster.
 
-In addition to accepting file globs, stylelint_d also accepts the following commands:
+`stylelint_d` also accepts input via stdin. Note you must supply either the config file location, or a file or directory name when running with stdin, or else `stylelint` won't be able to find the config. If you supply the config file directly, if you don't supply the absolute path, `stylelint_d` will take the cwd of the `stylelint_d` process.
+
+```
+> cat ./asset.css | stylelint_d --stdin --file asset.css
+> cat ./asset.css | stylelint_d --stdin --config ./.stylelintrc
+```
+
+In addition to accepting file globs and stdin, stylelint_d also accepts the following commands:
 
 ```
 # Stop the current running server
