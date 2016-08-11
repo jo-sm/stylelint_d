@@ -28,7 +28,7 @@ To lint a file, run:
 > stylelint_d <path/to/css/**/*.css>
 ```
 
-It will automatically find your `stylelint` configuration based on the path of the file. You can also optionally pass the `--config` or `-c` flag to denote the config file location. Note that the first time you run the linter, it may take a moment to start node, but afterwards it will be much faster.
+It will automatically find your `stylelint` configuration based on the path of the file. You can also optionally pass the `--config` or `-c` flag to denote the config file location. Note that the first time you run the linter, it will take a moment to initially import the `stylelint` module, but subsequent imports will be cached and lint execution will be much faster.
 
 `stylelint_d` also accepts input via stdin. Note you must supply either the config file location, or a file or directory name when running with stdin, or else `stylelint` won't be able to find the config. If you supply the config file directly, if you don't supply the absolute path, `stylelint_d` will take the cwd of the `stylelint_d` process.
 
@@ -47,6 +47,10 @@ In addition to accepting file globs and stdin, stylelint_d also accepts the foll
 # Restart the server
 > stylelint_d restart
 ```
+
+## Troubleshooting
+
+`stylelint_d` listens on `127.0.0.1:48126`. If for some reason linting isn't working, or returns strange results, check that the port is not in use by another process.
 
 ## License
 

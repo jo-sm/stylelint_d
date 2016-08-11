@@ -108,9 +108,9 @@ function getServerConn() {
 
     socket.once('connect', function() {
       resolve(socket);
-    })
+    });
 
-    socket.connect({ path: SOCKET_FILE });
+    socket.connect({ port: 48126, host: '127.0.0.1' });
   });
 
   return promise;
@@ -118,17 +118,16 @@ function getServerConn() {
 
 function waitForSocket() {
   return new Promise(function(resolve, reject) {
-    var counter = 0;
-
     var wait = function() {
       var socket = new net.Socket({});
-      socket.once('error', function() {
-        setTimeout(wait, 100);
-      });
+
+      socket.once('error', wait);
+
       socket.once('connect', function() {
         resolve(socket);
       });
-      socket.connect({ path: SOCKET_FILE });
+
+      socket.connect({ port: 48126, host: '127.0.0.1' });
     }
 
     wait();
