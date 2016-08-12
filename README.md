@@ -37,7 +37,9 @@ It will automatically find your `stylelint` configuration based on the path of t
 > cat ./asset.css | stylelint_d --stdin --config ./.stylelintrc
 ```
 
-In addition to accepting file globs and stdin, stylelint_d also accepts the following commands:
+You can specify the formatter using the `--formatter` flag, defaulting to `string`. The valid options are `string`, `json`, and `verbose` (see [Stylelint API #formatter](https://github.com/stylelint/stylelint/blob/master/docs/user-guide/node-api.md#formatter) for more details).
+
+In addition to aforementioned flags, stylelint_d also accepts the following commands:
 
 ```
 # Stop the current running server
