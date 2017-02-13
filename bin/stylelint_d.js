@@ -86,6 +86,10 @@ function lint(args) {
         try {
           message = JSON.parse(data.join(''));
 
+					if (message.errored) {
+						process.exitCode = 1;
+					}
+
           if (message.message) {
             console.log(message.message);
             return;
@@ -93,7 +97,6 @@ function lint(args) {
         } catch(e) {
           console.log(e);
         }
-
       }
 
       if (format === 'string') {
