@@ -4,6 +4,8 @@
   "description": "Long running Stylelint daemon",
   "bin": "bin/stylelint_d.js",
   "dependencies": {
+    "eslint": "^3.17.1",
+    "eslint_d": "^4.2.2",
     "glob": "^7.0.5",
     "minimist": "^1.2.0",
     "resolve": "^1.1.7",
