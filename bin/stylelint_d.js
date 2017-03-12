@@ -1,13 +1,10 @@
 #!/usr/bin/env node
 
-var fs = require('fs');
 var minimist = require('minimist');
 var net = require('net');
 var spawn = require('child_process').spawn;
 
 var packageJson = require('../package.json');
-
-var SOCKET_FILE = '/tmp/stylelint_d.sock';
 
 var args = minimist(process.argv.slice(2));
 
@@ -117,7 +114,7 @@ function getServerConn() {
 }
 
 function waitForSocket() {
-  return new Promise(function(resolve, reject) {
+  return new Promise(function(resolve) {
     var wait = function() {
       var socket = new net.Socket({});
 
@@ -128,7 +125,7 @@ function waitForSocket() {
       });
 
       socket.connect({ port: 48126, host: '127.0.0.1' });
-    }
+    };
 
     wait();
   });
