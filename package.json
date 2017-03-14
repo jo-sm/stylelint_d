@@ -1,6 +1,6 @@
 {
   "name": "stylelint_d",
-  "version": "1.0.9",
+  "version": "1.0.10",
   "description": "Long running Stylelint daemon",
   "bin": "bin/stylelint_d.js",
   "dependencies": {
