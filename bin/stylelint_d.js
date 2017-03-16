@@ -2,6 +2,7 @@
 
 var minimist = require('minimist');
 var net = require('net');
+var msgpack = require('msgpack');
 var spawn = require('child_process').spawn;
 
 var packageJson = require('../package.json');
@@ -61,17 +62,17 @@ function lint(args) {
     // case we are given a relative path
     conn.write(JSON.stringify([ process.cwd(), args ]) + "\r\n");
     conn.on('data', function(d) {
-      data.push(d.toString('utf8'));
+      data.push(d);
     });
 
     conn.on('end', function() {
       var output;
 
       try {
-        output = JSON.parse(data.join(''));
+        output = msgpack.unpack(data.join(''));
         output = output.output;
       } catch(e) {
-        output = data.join('');
+        output = '';
       }
 
       console.log(output);
@@ -84,7 +85,12 @@ function lint(args) {
 function getServerConn() {
   var promise = new Promise(function(resolve, reject) {
     // Make sure the socket can be connected to
-    var socket = new net.Socket({});
+    var socket = new net.Socket({
+      readable: true,
+      writeable: true,
+      allowHalfOpen: false,
+      fd: null
+    });
 
     socket.once('error', function() {
       var server = require.resolve('../lib/server');
@@ -98,9 +104,7 @@ function getServerConn() {
       socket.destroy();
 
       // Wait for server to spawn and socket to connect
-      waitForSocket().then(function(socket) {
-        resolve(socket);
-      }).catch(reject);
+      waitForSocket().then(resolve).catch(reject);
     });
 
     socket.once('connect', function() {
@@ -116,7 +120,12 @@ function getServerConn() {
 function waitForSocket() {
   return new Promise(function(resolve) {
     var wait = function() {
-      var socket = new net.Socket({});
+      var socket = new net.Socket({
+        readable: true,
+        writeable: true,
+        allowHalfOpen: false,
+        fd: null
+      });
 
       socket.once('error', wait);
 
