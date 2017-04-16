@@ -53,7 +53,7 @@ if (args.stdin) {
 
 function lint(args) {
   var command = args._[0];
-  var format = args.formatter;
+  var format = args.formatter || 'string';
 
   // Start or return server connection
   getServerConn().then(function(conn) {
@@ -86,10 +86,6 @@ function lint(args) {
         try {
           message = JSON.parse(data.join(''));
 
-					if (message.errored) {
-						process.exitCode = 1;
-					}
-
           if (message.message) {
             console.log(message.message);
             return;
@@ -100,7 +96,15 @@ function lint(args) {
       }
 
       if (format === 'string') {
-        var result = data.join('');
+        var result = data.map(function(d) {
+          return JSON.parse(d);
+        });
+
+        if (result.some(function(d) { return d.errored; })) {
+          process.exitCode = 1;
+        }
+
+        result = result.map(function(d) { return d.output; }).join('');
         console.log(result);
       } else {
         var parsedData = data.reduce(function(memo, i) {
