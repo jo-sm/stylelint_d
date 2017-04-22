@@ -53,7 +53,7 @@ if (args.stdin) {
 
 function lint(args) {
   var command = args._[0];
-  var format = args.formatter;
+  var format = args.formatter || 'string';
 
   // Start or return server connection
   getServerConn().then(function(conn) {
@@ -93,12 +93,26 @@ function lint(args) {
         } catch(e) {
           console.log(e);
         }
-
       }
 
       if (format === 'string') {
-        var result = data.join('');
-        console.log(result);
+        var result = data.map(function(d) {
+          return JSON.parse(d);
+        });
+
+        var output = [];
+
+        for (var r of result) {
+          if (r.errored) {
+            // 2: At least one rule with an "error"-level severity triggered at least one warning.
+            process.exitCode = 2;
+            output.push(r.output);
+          }
+        }
+
+        if (output.length > 0) {
+          console.log(output.join(''));
+        }
       } else {
         var parsedData = data.reduce(function(memo, i) {
           if (i === 'stylelint_d: start') {
@@ -141,6 +155,8 @@ function lint(args) {
     });
   }).catch(function(err) {
     console.log(generateError(err));
+    var exitCode = typeof err.code === "number" ? err.code : 1;
+    process.exit(exitCode);
   });
 }
 
