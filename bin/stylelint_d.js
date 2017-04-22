@@ -100,12 +100,19 @@ function lint(args) {
           return JSON.parse(d);
         });
 
-        if (result.some(function(d) { return d.errored; })) {
-          process.exitCode = 1;
+        var output = [];
+
+        for (var r of result) {
+          if (r.errored) {
+            // 2: At least one rule with an "error"-level severity triggered at least one warning.
+            process.exitCode = 2;
+            output.push(r.output);
+          }
         }
 
-        result = result.map(function(d) { return d.output; }).join('');
-        console.log(result);
+        if (output.length > 0) {
+          console.log(output.join(''));
+        }
       } else {
         var parsedData = data.reduce(function(memo, i) {
           if (i === 'stylelint_d: start') {
@@ -148,6 +155,8 @@ function lint(args) {
     });
   }).catch(function(err) {
     console.log(generateError(err));
+    var exitCode = typeof err.code === "number" ? err.code : 1;
+    process.exit(exitCode);
   });
 }
 
