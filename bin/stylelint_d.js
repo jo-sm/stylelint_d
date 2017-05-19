@@ -8,6 +8,7 @@ var packageJson = require('../package.json');
 var utils = require('../lib/utils');
 var separator = utils.separator;
 var generateError = utils.generateError;
+var validCommand = utils.validCommand;
 
 var args = minimist(process.argv.slice(2));
 
@@ -26,6 +27,10 @@ if (args.version || args.v) {
 var stdin = '';
 var filename = args.file || args.f;
 var config = args.config || args.c;
+
+if (!args.formatter) {
+  args.formatter = 'string';
+}
 
 if (args.stdin) {
   if (!filename && !config) {
@@ -82,23 +87,30 @@ function lint(args) {
       // if it is, print that.
       var message;
 
-      if (command) {
+      if (validCommand(command)) {
         try {
           message = JSON.parse(data.join(''));
 
           if (message.message) {
             console.log(message.message);
-            return;
           }
         } catch(e) {
+          console.log('Could not parse JSON after ended:');
           console.log(e);
         }
 
+        return;
       }
 
       if (format === 'string') {
         var result = data.join('');
-        console.log(result);
+
+        try {
+          console.log(JSON.parse(result));
+        } catch(e) {
+          console.log('Error: Could not parse `stylelint_d` result');
+          console.error(e);
+        }
       } else {
         var parsedData = data.reduce(function(memo, i) {
           if (i === 'stylelint_d: start') {
@@ -122,6 +134,7 @@ function lint(args) {
             try {
               i = JSON.parse(i);
             } catch(e) {
+              console.log(i);
               throw new Error('Could not parse Stylelint JSON.');
             }
 
