@@ -38,6 +38,14 @@ if (args.stdin) {
     return;
   }
 
+  var validSyntaxes = ["scss", "less", "sugarss", "sss"];
+  var recommendedSyntaxes = "scss, less, sugarss";
+  var language = args.language;
+  if (language && validSyntaxes.indexOf(language) === -1) {
+    console.log(`Error: invalid language (${language}). Valid languages: ${recommendedSyntaxes}`);
+    return;
+  }
+
   process.stdin.on('readable', function() {
     var chunk = process.stdin.read();
 
