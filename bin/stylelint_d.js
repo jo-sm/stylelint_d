@@ -1,5 +1,12 @@
 #!/usr/bin/env node
 
+/*
+  Exit codes:
+
+  1: Something else went wrong.
+  2: At least one rule with an "error"-level severity triggered at least one violations.
+ */
+
 var minimist = require('minimist');
 var net = require('net');
 var spawn = require('child_process').spawn;
@@ -95,6 +102,9 @@ function lint(args) {
             console.log(message.message);
           }
         } catch(e) {
+
+          process.exitCode = 1;
+
           console.log('Could not parse JSON after ended:');
           console.log(e);
         }
@@ -104,13 +114,26 @@ function lint(args) {
 
       if (format === 'string') {
         var result = data.join('');
+        var parsed;
+
 
         try {
-          console.log(JSON.parse(result));
+          parsed = JSON.parse(result);
         } catch(e) {
+          process.exitCode = 1;
+
           console.log('Error: Could not parse `stylelint_d` result');
           console.error(e);
         }
+
+        var didErrored = parsed.errored;
+        var output = parsed.output;
+
+        if (didErrored) {
+          process.exitCode = 2;
+        }
+
+        console.log(output);
       } else {
         var parsedData = data.reduce(function(memo, i) {
           if (i === 'stylelint_d: start') {
@@ -121,6 +144,8 @@ function lint(args) {
             memo.currentType = 'invalidOptionWarnings';
           } else if (i === 'stylelint_d: warnings') {
             memo.currentType = 'warnings';
+          } else if (i === 'stylelint_d: exitCode') {
+            memo.currentType = 'exitCode';
           } else if (memo.start) {
             memo.start = false;
             memo.currentIndex++;
@@ -134,11 +159,17 @@ function lint(args) {
             try {
               i = JSON.parse(i);
             } catch(e) {
+              process.exitCode = 1;
+
               console.log(i);
               throw new Error('Could not parse Stylelint JSON.');
             }
 
-            memo.outputs[memo.currentIndex][memo.currentType].push(i);
+            if (memo.currentType === 'exitCode') {
+              process.exitCode = i;
+            } else {
+              memo.outputs[memo.currentIndex][memo.currentType].push(i);
+            }
           }
 
           return memo;
@@ -153,6 +184,8 @@ function lint(args) {
       }
     });
   }).catch(function(err) {
+    process.exitCode = 1;
+
     console.log(generateError(err));
   });
 }
