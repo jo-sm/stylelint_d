@@ -112,10 +112,27 @@ function lint(args) {
         return;
       }
 
+      // Determine if it's an error, first
+      var errorObject;
+      var parsed;
+      if (data[0] === 'stylelint_d: isError') {
+        errorObject = data[1];
+
+        try {
+          parsed = JSON.parse(errorObject);
+        } catch(e) {
+          throw new Error('Unknown error occurred.');
+        }
+
+        process.exitCode = parsed.code;
+
+        console.log(parsed.message);
+
+        return;
+      }
+
       if (format === 'string') {
         var result = data.join('');
-        var parsed;
-
 
         try {
           parsed = JSON.parse(result);
@@ -124,6 +141,8 @@ function lint(args) {
 
           console.log('Error: Could not parse `stylelint_d` result');
           console.error(e);
+
+          return;
         }
 
         var didErrored = parsed.errored;
