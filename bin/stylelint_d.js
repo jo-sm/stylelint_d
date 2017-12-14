@@ -27,6 +27,7 @@ if (args.version || args.v) {
 var stdin = '';
 var filename = args.file || args.f;
 var config = args.config || args.c;
+var language = args.language;
 
 if (!args.formatter) {
   args.formatter = 'string';
@@ -40,10 +41,14 @@ if (args.stdin) {
 
   var validSyntaxes = ["scss", "less", "sugarss", "sss"];
   var recommendedSyntaxes = "scss, less, sugarss";
-  var language = args.language;
+
   if (language && validSyntaxes.indexOf(language) === -1) {
     console.log(`Error: invalid language (${language}). Valid languages: ${recommendedSyntaxes}`);
     return;
+  }
+
+  if (language && filename) {
+    console.log(`Notice: --language has higher precedence than the extension in the filename.\n${filename} will be parsed with syntax ${language}.`);
   }
 
   process.stdin.on('readable', function() {
