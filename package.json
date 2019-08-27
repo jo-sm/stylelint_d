@@ -7,7 +7,7 @@
     "glob": "^7.0.5",
     "minimist": "^1.2.0",
     "resolve": "^1.1.7",
-    "stylelint": "^7.1.0"
+    "stylelint": "^10.1.0"
   },
   "devDependencies": {
     "eslint": "^4.11.0",
