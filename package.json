@@ -10,8 +10,8 @@
     "stylelint": "^10.1.0"
   },
   "devDependencies": {
-    "eslint": "^4.11.0",
-    "eslint_d": "^5.1.0"
+    "eslint": "^6.3.0",
+    "eslint_d": "^8.0.0"
   },
   "repository": {
     "type": "git",
