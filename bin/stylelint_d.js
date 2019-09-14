@@ -7,9 +7,10 @@
   2: At least one rule with an "error"-level severity triggered at least one violations.
  */
 
-var minimist = require('minimist');
+var glob = require('glob');
 var net = require('net');
 var spawn = require('child_process').spawn;
+var minimist = require('minimist');
 
 var packageJson = require('../package.json');
 var utils = require('../lib/utils');
@@ -31,44 +32,62 @@ if (args.version || args.v) {
   return;
 }
 
-var stdin = '';
-var filename = args.file || args.f;
-var config = args.config || args.c;
-var language = args.language;
+var filename = args['stdin-filename'] || args.file || args.f;
+var config = args.config || args.c || false;
+var syntax = args.syntax;
 
-if (!args.formatter) {
-  args.formatter = 'string';
-}
+if (args['stdin-filename']) {
+  var code = '';
 
-if (args.stdin) {
-  if (!filename && !config) {
-    console.log('Error: --stdin requires --config or --file flags');
+  if (!filename) {
+    console.log('Error: --stdin requires --stdin-filename flags');
     return;
   }
 
-  var validSyntaxes = ["scss", "less", "sugarss", "sss"];
-  var recommendedSyntaxes = "scss, less, sugarss";
+  if (!config) {
+    var globString = filename
+      .replace(process.cwd(), "")
+      .split("/")
+      .reduce((acc, value, index, array) => {
+        if (value.length && index !== (array.length - 1)) {
+          acc += `{,${value}/}`;
+        } else if (index === (array.length - 1)) {
+          acc += `.stylelintrc{,.js,.json,.yml,.yaml}`;
+        }
 
-  if (language && validSyntaxes.indexOf(language) === -1) {
-    console.log(`Error: invalid language (${language}). Valid languages: ${recommendedSyntaxes}`);
+        return acc;
+      }, `${process.cwd()}/`);
+
+    config = glob.sync(globString, { ignore: "node_modules" })[0];
+  }
+
+  var validSyntaxes = ['sass', 'scss', 'less', 'sss'];
+  var recommendedSyntaxes = 'sass, scss, less, sss';
+
+  if (syntax && validSyntaxes.indexOf(syntax) === -1) {
+    console.log(`Error: invalid syntax (${syntax}). Valid syntaxes: ${recommendedSyntaxes}`);
     return;
   }
 
-  if (language && filename) {
-    console.log(`Notice: --language has higher precedence than the extension in the filename.\n${filename} will be parsed with syntax ${language}.`);
+  if (syntax && filename) {
+    console.log(`Notice: --syntax has higher precedence than the extension in the filename.\n${filename} will be parsed with syntax ${syntax}.`);
   }
 
   process.stdin.on('readable', function() {
     var chunk = process.stdin.read();
 
     if (chunk !== null) {
-      stdin += chunk;
+      code += chunk;
     }
   });
 
   process.stdin.on('end', function() {
-    args.stdin = stdin;
+    args.code = code;
     args.files = [ filename ];
+    args.codeFilename = filename;
+    args.config = config;
+    args.formatter = (args.formatter) ? args.formatter : 'string';
+
     lint(args);
   });
 } else {
@@ -76,9 +95,9 @@ if (args.stdin) {
   lint(args);
 }
 
-function lint(args) {
-  var command = args._[0];
-  var format = args.formatter;
+function lint(options) {
+  var command = options._[0];
+  var format = options.formatter;
 
   // Start or return server connection
   getServerConn().then(function(conn) {
@@ -94,7 +113,7 @@ function lint(args) {
 
     // We write both the cwd and the potential filename, in
     // case we are given a relative path
-    conn.write(JSON.stringify([ process.cwd(), args ]) + separator);
+    conn.write(JSON.stringify([ process.cwd(), options ]) + separator);
     conn.on('data', function(d) {
       data.push(d.toString('utf8'));
     });
