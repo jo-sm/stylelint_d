@@ -7,11 +7,11 @@
     "glob": "^7.0.5",
     "minimist": "^1.2.0",
     "resolve": "^1.1.7",
-    "stylelint": "^7.1.0"
+    "stylelint": "^11.0.0"
   },
   "devDependencies": {
-    "eslint": "^4.11.0",
-    "eslint_d": "^5.1.0"
+    "eslint": "^6.4.0",
+    "eslint_d": "^8.0.0"
   },
   "repository": {
     "type": "git",
