@@ -17,7 +17,7 @@ var separator = utils.separator;
 var generateError = utils.generateError;
 var validCommand = utils.validCommand;
 
-var args = minimist(process.argv.slice(2));
+var argv = minimist(process.argv.slice(2));
 
 function separateData(pieces) {
   return pieces.join('').split(separator).filter(function(i) {
@@ -26,21 +26,21 @@ function separateData(pieces) {
 }
 
 // If version, show current package.json version
-if (args.version || args.v) {
+if (argv.version || argv.v) {
   console.log(packageJson.version);
   return;
 }
 
 var stdin = '';
-var filename = args.file || args.f;
-var config = args.config || args.c;
-var language = args.language;
+var filename = argv.file || argv.f;
+var config = argv.config || argv.c;
+var language = argv.language;
 
-if (!args.formatter) {
-  args.formatter = 'string';
+if (!argv.formatter) {
+  argv.formatter = 'string';
 }
 
-if (args.stdin) {
+if (argv.stdin) {
   if (!filename && !config) {
     console.log('Error: --stdin requires --config or --file flags');
     return;
@@ -67,13 +67,13 @@ if (args.stdin) {
   });
 
   process.stdin.on('end', function() {
-    args.stdin = stdin;
-    args.files = [ filename ];
-    lint(args);
+    argv.stdin = stdin;
+    argv.files = [ filename ];
+    lint(argv);
   });
 } else {
-  args.files = args._;
-  lint(args);
+  argv.files = argv._;
+  lint(argv);
 }
 
 function lint(args) {

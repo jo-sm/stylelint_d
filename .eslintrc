@@ -1,7 +1,5 @@
 {
-  "ecmaFeatures": {
-    "jsx": true
-  },
+  "ecmaFeatures": {},
   "env": {
     "browser": false,
     "es6": true,
