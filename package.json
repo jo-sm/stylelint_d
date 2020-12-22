@@ -11,7 +11,8 @@
   },
   "devDependencies": {
     "eslint": "^7.15.0",
-    "eslint_d": "^9.1.2"
+    "eslint_d": "^9.1.2",
+    "prettier": "^2.2.1"
   },
   "repository": {
     "type": "git",
