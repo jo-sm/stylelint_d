@@ -76,15 +76,31 @@ if (argv.stdin) {
   process.stdin.on("end", function () {
     argv.stdin = stdin;
     argv.files = [filename];
-    lint(argv);
+
+    // Temporary measure to fix the bug while I migrate to TS and add tests
+    const args = {
+      files: [filename],
+      stdin,
+      config,
+      language,
+    };
+
+    lint(args);
   });
 } else {
-  argv.files = argv._;
-  lint(argv);
+  const args = {
+    files: filename ? [filename] : argv._,
+    command: argv._[0],
+    stdin,
+    config,
+    language,
+  };
+
+  lint(args);
 }
 
 function lint(args) {
-  var command = args._[0];
+  var command = args.command;
   var format = args.formatter;
 
   // Start or return server connection
