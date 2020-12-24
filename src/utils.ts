@@ -1,7 +1,9 @@
-var separator = "stylelint_d_separator";
+import { LintResult } from "stylelint";
 
-function generateError(message, format) {
-  var prefix = "Could not lint file";
+export const separator = "stylelint_d_separator";
+
+export function generateError(message: string, format = "string"): string | LintResult[] {
+  const prefix = "Could not lint file";
 
   if (message) {
     message = `${prefix}: ${message}`;
@@ -14,8 +16,11 @@ function generateError(message, format) {
   } else {
     return [
       {
+        source: "",
         deprecations: [],
         invalidOptionWarnings: [],
+        errored: undefined,
+        ignored: undefined,
         warnings: [
           {
             line: 0,
@@ -30,22 +35,16 @@ function generateError(message, format) {
   }
 }
 
-function validCommand(command) {
-  var validCommands = ["stop", "start", "restart"];
+export function validCommand(command?: string): boolean {
+  const validCommands = ["stop", "start", "restart"];
 
   if (typeof command !== "string") {
     return false;
   }
 
-  if (validCommands.indexOf(command) === -1) {
+  if (validCommands.includes(command)) {
     return false;
   }
 
   return true;
 }
-
-module.exports = {
-  separator: separator,
-  generateError: generateError,
-  validCommand: validCommand,
-};
