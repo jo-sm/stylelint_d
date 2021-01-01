@@ -2,129 +2,162 @@ import net from "net";
 import path from "path";
 import resolve from "resolve";
 import glob from "glob";
-import { LinterResult, LintResult } from "stylelint";
+import { LinterResult } from "stylelint";
+import { Socket } from "./Socket";
+import { LintRequest, Request, Command, Response, LintArguments } from "./types";
 
-import { separator, generateError } from "./utils";
+type EventCallback = (data: any) => void;
+type Event = "log" | "restart" | "stop";
 
-let server = startServer();
+export const PORT = 48126;
 
-function startServer() {
-  const server = net.createServer(connectionListener);
+export class Server {
+  private server: net.Server;
+  private listeners: { [key: string]: EventCallback } = {};
 
-  server.listen(48126, "127.0.0.1");
+  private static createInstance(
+    handleConnection: typeof Server.prototype.handleConnection
+  ): net.Server {
+    const instance = net.createServer({ allowHalfOpen: true }, handleConnection);
 
-  process.title = "stylelint_d";
-  process.removeAllListeners();
-  process.on("SIGTERM", stopServer);
-  process.on("SIGINT", stopServer);
+    instance.listen(PORT, "127.0.0.1");
 
-  return server;
-}
+    return instance;
+  }
 
-function stopServer() {
-  server.close();
+  constructor() {
+    this.server = Server.createInstance(this.handleConnection.bind(this));
+  }
 
-  process.exit(0);
-}
+  end(isStopping = false): void {
+    this.server.close();
 
-function write(conn: net.Socket, message: string) {
-  conn.write(`${message}${separator}`);
-}
-
-function serverMessage(text: string) {
-  return {
-    message: text,
-  };
-}
-
-function connectionListener(conn: net.Socket) {
-  const data: string[] = [];
-
-  conn.on("data", (chunk) => {
-    data.push(chunk.toString("utf8"));
-
-    const rawData = data.join("");
-
-    if (rawData.indexOf(separator) === -1) {
-      return;
+    if (isStopping) {
+      this.fireEvent("stop");
     }
+  }
 
-    const splitData = rawData.split(separator);
-    const raw = splitData[0].trim();
-    let rawOpts;
+  // TODO: polymorphic type for this
+  on(eventName: Event, cb: EventCallback): void {
+    this.listeners[eventName] = cb;
+  }
 
-    // We shouldn't get invalid JSON, but just in case...
+  private fireEvent(eventName: Event, data?: any) {
+    this.listeners[eventName] && this.listeners[eventName](data);
+  }
+
+  private async handleConnection(rawSocket: net.Socket) {
+    const socket = new Socket(rawSocket, "server");
+
     try {
-      rawOpts = JSON.parse(raw);
-    } catch (e) {
-      conn.write(JSON.stringify(generateError("Invalid data from client", "string")));
-      conn.end();
-      return;
-    }
-
-    const [cwd, args] = rawOpts;
-    const command = args.command;
-    let files: string[] = args.files;
-
-    console.info(`Command received: ${command}`);
-
-    if (command === "stop") {
-      write(conn, JSON.stringify(serverMessage("stylelint_d stopped.")));
-      conn.end();
-      server.close();
-      return;
-    }
-
-    if (command === "restart") {
-      write(conn, JSON.stringify(serverMessage("stylelint_d restarting.")));
-      conn.end();
-
-      server.close();
-      server = startServer();
-      return;
-    }
-
-    const formatter = args.formatter ? args.formatter : "string";
-    const lintOpts: { [key: string]: any } = { formatter };
-
-    let folder: string;
-    let config: string = args.config || args.c;
-
-    if (config) {
-      console.info("Config flag passed");
-
-      // If there is a config given, use that first
-      if (!path.isAbsolute(config)) {
-        console.info(`Relative config path given, making absolute to cwd (${cwd})`);
-        config = path.resolve(cwd, config);
+      await this.onConnection(socket);
+    } catch (error) {
+      if (socket.writable) {
+        socket.send<Response>({
+          status: "error",
+          command: "unknown",
+          message: `A server error occurred: ${error.message}`,
+        });
       }
 
-      lintOpts.configFile = config;
-      folder = path.dirname(config);
+      this.fireEvent("log", {
+        message: error.message,
+      });
+    }
+  }
+
+  private restart() {
+    this.end();
+    this.server = Server.createInstance(this.handleConnection.bind(this));
+
+    this.fireEvent("restart");
+  }
+
+  private async onConnection(socket: Socket): Promise<void> {
+    let data;
+
+    try {
+      data = await socket.getData<Request>();
+    } catch (err) {
+      await socket.send<Response>({
+        status: "error",
+        command: "unknown",
+        message: "Invalid client JSON",
+      });
+
+      this.fireEvent("log", {
+        message: err.message,
+      });
+
+      return;
+    }
+
+    const { command } = data;
+
+    this.fireEvent("log", {
+      message: `Command received: ${command}`,
+    });
+
+    if (command === Command.STOP) {
+      await socket.send<Response>({
+        status: "ok",
+        command,
+        message: "stylelint_d stopping...",
+      });
+
+      this.end(true);
+
+      return;
+    }
+
+    if (command === Command.RESTART) {
+      await socket.send<Response>({
+        status: "ok",
+        command,
+        message: "stylelint_d restarting...",
+      });
+
+      this.restart();
+
+      return;
+    }
+
+    const { lintArguments, cwd: clientCwd } = data as LintRequest;
+
+    let lintResolveBasedir: string;
+
+    if (lintArguments.configFile) {
+      lintResolveBasedir = path.dirname(lintArguments.configFile);
+    } else if (lintArguments.files) {
+      // Take the first given file. If it's a glob, get the path of the glob. Otherwise,
+      // make it absolute to cwd if it isn't absolute.
+      const fileOrGlob: string = lintArguments.files[0];
+
+      if (fileOrGlob.match(/\*/)) {
+        const folderGlob = new glob.Glob(fileOrGlob);
+
+        lintResolveBasedir = folderGlob.minimatch.set[0]
+          .reduce<string[]>((memo, i) => {
+            if (typeof i === "string") {
+              memo.push(i);
+            }
+
+            return memo;
+          }, [])
+          .join("/");
+
+        if (!path.isAbsolute(lintResolveBasedir)) {
+          lintResolveBasedir = path.resolve(clientCwd, lintResolveBasedir);
+        }
+      } else if (path.isAbsolute(fileOrGlob)) {
+        lintResolveBasedir = path.dirname(fileOrGlob);
+      } else {
+        const absoluteFilename = path.resolve(clientCwd, fileOrGlob);
+
+        lintResolveBasedir = path.dirname(absoluteFilename);
+      }
     } else {
-      console.info("No config flag passed");
-      // If no config is given, use the file parameter to determine where to set process directory to
-
-      // If first file is not an absolute path, use the cwd of the `stylelint_d`
-      // executable
-      if (!path.isAbsolute(files[0])) {
-        files = files.map((file) => path.resolve(cwd, file));
-      }
-
-      // Look at the first file, see if it's a glob, and return the possible
-      // folder name
-      const folderGlob = new glob.Glob(files[0]);
-      folder = folderGlob.minimatch.set[0]
-        .reduce(function (memo, i) {
-          if (typeof i === "string") {
-            memo.push(i);
-          }
-
-          return memo;
-        }, [])
-        .join("/");
-
-      folder = path.dirname(folder);
+      lintResolveBasedir = clientCwd;
     }
 
     // Import the linter dynamically based on the folder of the config or CSS file
@@ -133,124 +166,43 @@ function connectionListener(conn: net.Socket) {
     // If the module cannot be resolved at the given path, it will throw an error
     // In that case, use the package `stylelint` module
     try {
-      linterPath = resolve.sync("stylelint", { basedir: folder });
-      console.info(`Resolved stylelint in local folder ${folder}`);
+      linterPath = resolve.sync("stylelint", { basedir: lintResolveBasedir });
+
+      this.fireEvent("log", {
+        message: `Resolved stylelint in folder ${lintResolveBasedir}`,
+      });
     } catch (e) {
       linterPath = resolve.sync("stylelint");
-      console.info("Could not resolve stylelint in CSS path, using package stylelint module");
-    }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-var-requires
-    const linter: (opts: any) => Promise<LinterResult> = require(linterPath).lint;
-
-    // "You must pass stylelint a `files` glob or a `code` string, though not both"
-    if (args.stdin) {
-      console.info("Given stdin");
-
-      folder = files[0];
-      lintOpts.code = args.stdin;
-
-      if (args.file) {
-        lintOpts.codeFilename = args.file;
-      }
-
-      if (args.language) {
-        lintOpts.syntax = args.language;
-      }
-    } else {
-      console.info(`Given files: ${files}`);
-
-      lintOpts.files = files;
-    }
-
-    if (args.fix) {
-      lintOpts.fix = args.fix;
-    }
-
-    linter(lintOpts)
-      // eslint-disable-next-line
-      .then(function (data) {
-        console.info("Successfully linted. Sending data to client.");
-        let result;
-
-        if (formatter === "string") {
-          // If the formatter is a string, we just send the raw output
-          // from stylelint, since it's formatted for us already.
-          result = JSON.stringify({
-            output: data.output,
-            errored: data.errored,
-          });
-
-          write(conn, result);
-        } else {
-          // To handle large data, we spread out sending the resulting
-          // lint data over each of the deprecations, invalidOptionWarnings,
-          // and warnings, sending them one at a time, separated by the
-          // separator.
-          let parsedOutput: LintResult[];
-
-          try {
-            parsedOutput = JSON.parse(data.output);
-          } catch (e) {
-            throw new Error("Stylelint data was invalid.");
-          }
-
-          for (const output of parsedOutput) {
-            write(conn, "stylelint_d: start");
-            write(conn, output.source);
-
-            write(conn, "stylelint_d: deprecations");
-            for (const deprecation of output.deprecations) {
-              write(conn, JSON.stringify(deprecation));
-            }
-
-            write(conn, "stylelint_d: invalidOptionWarnings");
-            for (const invalidOptionWarning of output.invalidOptionWarnings) {
-              write(conn, JSON.stringify(invalidOptionWarning));
-            }
-
-            write(conn, "stylelint_d: warnings");
-            for (const warning of output.warnings) {
-              write(conn, JSON.stringify(warning));
-            }
-
-            write(conn, "stylelint_d: exitCode");
-            if (output.warnings.length > 0) {
-              write(conn, JSON.stringify(2));
-            } else {
-              write(conn, JSON.stringify(0));
-            }
-          }
-        }
-      })
-      .catch(function (error) {
-        console.info(`Could not lint: ${error}`);
-
-        // If the error code is 78, it's due to a configuration error
-        // If the error code is 80, it's a glob error
-        // 78 -> 3, 80 -> 4, (other) -> 5
-
-        let errorCode = 1;
-
-        if (error.code === 78) {
-          errorCode = 3;
-        } else if (error.code === 80) {
-          errorCode = 4;
-        } else if (Number.isInteger(error.code)) {
-          errorCode = 5;
-        }
-
-        const errorObject = {
-          message: generateError(error, formatter),
-          code: errorCode,
-        };
-
-        write(conn, "stylelint_d: isError");
-        write(conn, JSON.stringify(errorObject));
-      })
-      .then(function () {
-        // Finally, close the connection
-        conn.end();
+      this.fireEvent("log", {
+        message: `Could not resolve stylelint in ${lintResolveBasedir}, using package stylelint module`,
       });
-  });
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const linter: (opts: LintArguments) => Promise<LinterResult> = require(linterPath).lint;
+
+    let result;
+
+    try {
+      result = await linter(lintArguments);
+    } catch (err) {
+      await socket.send<Response>({
+        status: "error",
+        command,
+        message: err.message,
+        metadata: {
+          code: err.code,
+        },
+      });
+
+      return;
+    }
+
+    await socket.send<Response>({
+      status: "ok",
+      command: Command.LINT,
+      result,
+    });
+  }
 }
