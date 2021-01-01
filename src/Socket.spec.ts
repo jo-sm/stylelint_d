@@ -20,6 +20,7 @@ describe("Socket", () => {
           }),
           end: jest.fn(),
           write: jest.fn(),
+          destroy: jest.fn(),
         } as unknown) as net.Socket;
 
         return Promise.resolve(result);
@@ -198,6 +199,16 @@ describe("Socket", () => {
       }
 
       expect(err).toBeInstanceOf(Error);
+    });
+
+    it("should resolve with nothing and destroy the socket if no data was sent", async () => {
+      const rawSocket = await utils.getNetSocket();
+      const socket = new Socket(rawSocket, "server");
+
+      eventHandlers.end();
+
+      expect(await socket.getData()).toBeUndefined();
+      expect(rawSocket.destroy).toBeCalled();
     });
   });
 });

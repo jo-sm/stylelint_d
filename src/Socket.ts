@@ -79,7 +79,7 @@ export class Socket {
 
     chunks.forEach((chunk) => this.rawSocket.write(chunk));
 
-    await new Promise<void>(this.rawSocket.end);
+    await new Promise<void>((resolve) => this.rawSocket.end(resolve));
 
     return true;
   }
@@ -113,6 +113,12 @@ export class Socket {
     const buffers: Buffer[] = [];
 
     const handleDecode = () => {
+      if (buffers.length === 0) {
+        this.dataDefer.resolve();
+        this.rawSocket.destroy();
+        return;
+      }
+
       let data;
 
       try {

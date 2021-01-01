@@ -92,6 +92,10 @@ export class Server {
       return;
     }
 
+    if (!data) {
+      return;
+    }
+
     const { command } = data;
 
     this.fireEvent("log", {

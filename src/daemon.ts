@@ -11,6 +11,10 @@ instance.on("stop", () => {
   process.exit(0);
 });
 
+instance.on("log", (message) => {
+  console.log(message.message);
+});
+
 function kill() {
   instance.end();
 
