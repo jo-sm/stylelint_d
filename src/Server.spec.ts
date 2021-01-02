@@ -215,7 +215,11 @@ describe("Server", () => {
 
       it("should respond with the results of the linting when linting is successful", async () => {
         const lintResult = {
-          something: "some result",
+          output: "some result",
+          errored: true,
+          result: {
+            key: "some value",
+          },
         } as any;
 
         lint.mockResolvedValueOnce(lintResult);
@@ -229,7 +233,8 @@ describe("Server", () => {
         expect(socket.send).toBeCalledWith({
           status: "ok",
           command: Command.LINT,
-          result: lintResult,
+          output: lintResult.output,
+          errored: lintResult.errored,
         });
       });
 

@@ -28,6 +28,8 @@ export interface LintArguments {
   configBasedir?: string;
 
   customFormatter?: string;
+
+  formatter?: string;
 }
 
 interface NonLintRequest {
@@ -58,7 +60,8 @@ interface NonLintResponse {
 interface LintResponse {
   status: "ok";
   command: Command.LINT;
-  result: LinterResult;
+  output: LinterResult["output"];
+  errored: LinterResult["errored"];
 }
 
 export type Response = ErrorResponse | NonLintResponse | LintResponse;

@@ -206,7 +206,8 @@ export class Server {
     await socket.send<Response>({
       status: "ok",
       command: Command.LINT,
-      result,
+      output: result.output,
+      errored: result.errored,
     });
   }
 }

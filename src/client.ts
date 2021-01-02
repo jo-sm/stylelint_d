@@ -148,6 +148,10 @@ export async function client(argv: string[]): Promise<ClientResult> {
         }
       }
     }
+
+    if (!lintArguments.formatter) {
+      lintArguments.formatter = "string";
+    }
   }
 
   return handleCommand(command, lintArguments);
@@ -235,8 +239,8 @@ async function handleCommand(
 
   if (response.command === Command.LINT) {
     return {
-      message: response.result.output,
-      code: response.result.errored ? 2 : 0,
+      message: response.output,
+      code: response.errored ? 2 : 0,
     };
   }
 

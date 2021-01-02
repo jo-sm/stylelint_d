@@ -179,6 +179,32 @@ describe("client", () => {
   });
 
   describe("lint command", () => {
+    it('should add a formatter if given, or "string" otherwise', async () => {
+      const { socket } = setup();
+
+      await client(["file.css"]);
+
+      expect(socket.send).toHaveBeenNthCalledWith(1, {
+        command: Command.LINT,
+        cwd: expect.any(String),
+        lintArguments: {
+          files: ["file.css"],
+          formatter: "string",
+        },
+      });
+
+      await client(["--formatter", "something-else", "file.css"]);
+
+      expect(socket.send).toHaveBeenNthCalledWith(2, {
+        command: Command.LINT,
+        cwd: expect.any(String),
+        lintArguments: {
+          files: ["file.css"],
+          formatter: "something-else",
+        },
+      });
+    });
+
     it("should send a lint command to the server", async () => {
       const { socket } = setup();
 
@@ -189,6 +215,7 @@ describe("client", () => {
         cwd: expect.any(String),
         lintArguments: {
           files: ["some/file.css", "some/otherfile.css"],
+          formatter: "string",
         },
       });
     });
@@ -206,6 +233,7 @@ describe("client", () => {
             quiet: true,
           },
           files: ["some/file.css"],
+          formatter: "string",
         },
       });
     });
@@ -235,6 +263,7 @@ describe("client", () => {
         lintArguments: {
           code: "some stdin code",
           codeFilename: "/path/to/some/filename.css",
+          formatter: "string",
         },
       });
     });
@@ -249,6 +278,7 @@ describe("client", () => {
         cwd: expect.any(String),
         lintArguments: {
           files: ["/some/css/file.css"],
+          formatter: "string",
         },
       });
     });
@@ -264,6 +294,7 @@ describe("client", () => {
         lintArguments: {
           files: ["file.css"],
           configFile: "/config/file.json",
+          formatter: "string",
         },
       });
     });
@@ -286,6 +317,7 @@ describe("client", () => {
         lintArguments: {
           files: ["file.css"],
           configFile: `${process.cwd()}/file.json`,
+          formatter: "string",
         },
       });
     });
@@ -301,6 +333,7 @@ describe("client", () => {
         lintArguments: {
           files: ["file.css"],
           configBasedir: "/some/configbasedir",
+          formatter: "string",
         },
       });
     });
@@ -316,6 +349,7 @@ describe("client", () => {
         lintArguments: {
           files: ["file.css"],
           configBasedir: `${process.cwd()}/configbasedir`,
+          formatter: "string",
         },
       });
     });
@@ -331,6 +365,7 @@ describe("client", () => {
         lintArguments: {
           files: ["file.css"],
           configBasedir: `${process.cwd()}/configbasedir`,
+          formatter: "string",
         },
       });
     });
@@ -346,6 +381,7 @@ describe("client", () => {
         lintArguments: {
           files: ["file.css"],
           customFormatter: "/some/custom/formatter.js",
+          formatter: "string",
         },
       });
     });
@@ -367,7 +403,38 @@ describe("client", () => {
         lintArguments: {
           files: ["file.css"],
           customFormatter: `${process.cwd()}/formatter.js`,
+          formatter: "string",
         },
+      });
+    });
+
+    it("should respond with the lint output", async () => {
+      const { socket } = setup();
+
+      socket.getData.mockResolvedValueOnce({
+        command: Command.LINT,
+        output: "some output",
+        errored: false,
+      });
+
+      expect(await client(["file.css"])).toStrictEqual({
+        message: "some output",
+        code: 0,
+      });
+    });
+
+    it("should add a nonzero code if the lint responded with errored as true", async () => {
+      const { socket } = setup();
+
+      socket.getData.mockResolvedValueOnce({
+        command: Command.LINT,
+        output: "some other output",
+        errored: true,
+      });
+
+      expect(await client(["file.css"])).toStrictEqual({
+        message: "some other output",
+        code: 2,
       });
     });
   });
