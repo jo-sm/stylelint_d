@@ -108,8 +108,8 @@ export async function spawnDaemon(): Promise<boolean> {
     throw new Error("Daemon already running");
   }
 
-  const server = require.resolve("../src/daemon");
-  const child = childProcess.spawn("node", [server], {
+  const daemon = require.resolve("../src/daemon/tty");
+  const child = childProcess.spawn("node", [daemon], {
     detached: true,
     stdio: ["ignore", "ignore", "ignore"],
   });

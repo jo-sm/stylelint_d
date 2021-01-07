@@ -16,6 +16,8 @@ To install globally for all projects:
 > npm install -g stylelint_d
 ```
 
+Note: `stylelint_d` depends on [`node-pty`](https://github.com/microsoft/node-pty), which depends on the ability to build C++ files. If you run into a `node-gyp` build issue, please check the documentation for `node-pty` and make sure you have a proper build system in place. If this is a blocker for you, please [open an issue](https://github.com/jo-sm/stylelint_d/issues/new) here.
+
 ## Usage
 
 `stylelint_d` aims to be as compatible with `stylelint` as possible, and acts as a very thin wrapper on top of `stylelint` as much as possible. This means that you should be able to pass any argument to the command line and can expect it to work as it does in the official `stylelint` CLI. For details on the available flags, please see the [official Stylelint CLI documentation](https://stylelint.io/user-guide/usage/cli).

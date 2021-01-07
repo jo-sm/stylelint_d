@@ -1,4 +1,4 @@
-import { Server } from "./Server";
+import { Server } from "../Server";
 
 const instance = new Server();
 
@@ -15,6 +15,9 @@ instance.on("log", (message) => {
   console.log(message.message);
 });
 
+/**
+ * Stop the server and kill the process.
+ */
 function kill() {
   instance.end();
 

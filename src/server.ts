@@ -11,10 +11,18 @@ type Event = "log" | "restart" | "stop";
 
 export const PORT = 48126;
 
+/**
+ * The linting server. Becomes daemonized via `daemon/process`.
+ */
 export class Server {
   private server: net.Server;
   private listeners: { [key: string]: EventCallback } = {};
 
+  /**
+   * Create a new net.Server instance listening on 127.0.0.1:48126.
+   * @param handleConnection the connection handling function
+   * @returns a new net.Server instance
+   */
   private static createInstance(
     handleConnection: typeof Server.prototype.handleConnection
   ): net.Server {
@@ -29,6 +37,11 @@ export class Server {
     this.server = Server.createInstance(this.handleConnection.bind(this));
   }
 
+  /**
+   * Closes the current net.Server instance.
+   *
+   * @param isStopping if the server is stopping (meaning, the user sent the stop command)
+   */
   end(isStopping = false): void {
     this.server.close();
 
@@ -37,15 +50,37 @@ export class Server {
     }
   }
 
-  // TODO: polymorphic type for this
+  /**
+   * Adds an event listener for the given event.
+   *
+   * @param eventName name of the event
+   * @param cb Callback to call when the event is fired.
+   * @remarks TODO: polymorphic type for this function
+   */
   on(eventName: Event, cb: EventCallback): void {
     this.listeners[eventName] = cb;
   }
 
+  /**
+   * Fire an event, if it has a listener.
+   *
+   * @param eventName
+   * @param data
+   */
   private fireEvent(eventName: Event, data?: any) {
     this.listeners[eventName] && this.listeners[eventName](data);
   }
 
+  /**
+   * Handle an incoming net.Socket connection.
+   *
+   * Passes a Socket instance wrapped net.Socket instance to this.processSocket.
+   *
+   * If it throws, logs the error. If the socket is still writable, send an
+   * error over the socket as well.
+   *
+   * @param rawSocket the incoming net.Socket
+   */
   private async handleConnection(rawSocket: net.Socket) {
     const socket = new Socket(rawSocket, "server");
 
@@ -66,6 +101,9 @@ export class Server {
     }
   }
 
+  /**
+   * Restarts the server.
+   */
   private restart() {
     this.end();
     this.server = Server.createInstance(this.handleConnection.bind(this));
@@ -73,6 +111,11 @@ export class Server {
     this.fireEvent("restart");
   }
 
+  /**
+   * Processes an incoming connection.
+   *
+   * @param  socket Socket instance of the net.Socket connection
+   */
   private async processSocket(socket: Socket): Promise<void> {
     let data;
 
