@@ -1,0 +1,8 @@
+src/
+bin/
+.github/
+
+.eslintrc.json
+.prettierrc.json
+tsconfig.json
+jest.config.js
