@@ -1,6 +1,6 @@
 # stylelint_d
 
-`stylelint_d` is a long running `stylelint` daemon that makes CSS linting much faster compared to the `stylelint` CLI. Instead of starting a Node process each time you lint, which is slow and can take 500ms+ to start the node process, this creates a server which listens for filenames (as well as a few commands) and lints the given files, returning the output to the client significantly faster. The time to lint is reduced to just the time `stylelint` will take to run. The main use case is for time dependent processes, like linting in a code editor.
+`stylelint_d` is a long running `stylelint` daemon that makes CSS linting much faster compared to the official `stylelint` CLI. It works by creating a daemonized "server" that handles linting, reducing the time it take to run `stylelint` to only the time it takes to actually lint, without the overhead of instantiating a new Node process. Its main use is for time dependent processes, like linting in a code editor.
 
 Thanks to [eslint_d](https://github.com/mantoni/eslint_d.js) by [Maximilian Antoni](https://github.com/mantoni) for the idea!
 
@@ -16,49 +16,59 @@ To install globally for all projects:
 > npm install -g stylelint_d
 ```
 
+Note: `stylelint_d` depends on [`node-pty`](https://github.com/microsoft/node-pty), which depends on the ability to build C++ files. If you run into a `node-gyp` build issue, please check the documentation for `node-pty` and make sure you have a proper build system in place. If this is a blocker for you, please [open an issue](https://github.com/jo-sm/stylelint_d/issues/new) here.
+
 ## Usage
 
-`stylelint_d` is less robust than the `stylelint` CLI, and does not accept most of the options that the main CLI does; `stylelint_d` only accepts the specific commands explained below, as well as file globs, as parameters. If you need to use the CLI options, please use the standard `stylelint` CLI. If there is a specific flag you need, create an issue and I can add it in.
+`stylelint_d` aims to be as compatible with `stylelint` as possible, and acts as a very thin wrapper on top of `stylelint` as much as possible. This means that you should be able to pass any argument to the command line and can expect it to work as it does in the official `stylelint` CLI. For details on the available flags, please see the [official Stylelint CLI documentation](https://stylelint.io/user-guide/usage/cli).
 
-To lint a file, run:
+### Server commands
 
+In addition to the flags supported by the official CLI, you can also get information about the running daemon by using the following commands:
+
+```bash
+# Get the status of the daemon (is it running or not?)
+> npx stylelint_d status
+
+# Start the daemon if it isn't running
+> npx stylelint_d start
+
+# Restart the daemon
+> npx stylelint_d restart
+
+# Stop the daemon
+> npx stylelint_d stop
 ```
-> stylelint_d <path/to/file.css>
-# You can also pass file globs
-> stylelint_d <path/to/css/**/*.css>
-```
 
-It will automatically find your `stylelint` configuration based on the path of the file. You can also optionally pass the `--config` or `-c` flag to denote the config file location. Note that the first time you run the linter, it will take a moment to initially start the node process and import the `stylelint` module, but subsequent imports will be cached and lint execution will be much faster.
+You will get an error message (and a nonzero status code) if you try to run one of the commands in an invalid state, e.g. trying to start when `stylelint_d` is already running.
 
-`stylelint_d` also accepts input via stdin. Note you must supply either the config file location, or a file or directory name when running with stdin, or else `stylelint` won't be able to find the config. If you supply the config file directly, if you don't supply the absolute path, `stylelint_d` will take the cwd of the `stylelint_d` process.
+### `stylelint` module resolution
 
-```
-> cat ./asset.css | stylelint_d --stdin --file asset.css
-> cat ./asset.css | stylelint_d --stdin --config ./.stylelintrc
-```
+`stylelint_d` tries to use the `stylelint` package that can be resolved in the path of, in order, 1. path of the config file, 2. path of the first given CSS file, 3. path of the glob, 4. the path where you invocated `stylelint_d`. This means that whichever version of `stylelint` that you use should be detected and used by the daemon.
 
-You can specify the formatter using the `--formatter` flag, defaulting to `string`. The valid options are `string` and `json`. (see [Stylelint API #formatter](https://github.com/stylelint/stylelint/blob/master/docs/user-guide/node-api.md#formatter) for more details).
-
-In addition to aforementioned flags, stylelint_d also accepts the following commands:
-
-```
-# Stop the current running server
-> stylelint_d stop
-# Start a new server
-> stylelint_d start
-# Restart the server
-> stylelint_d restart
-```
+However, if for some reason it cannot detect a valid `stylelint` package in any of the above, `stylelint_d` will instead use its built-in version of `stylelint`.
 
 ## Troubleshooting
 
-`stylelint_d` listens on `127.0.0.1:48126`. If for some reason linting isn't working, or returns strange results, check that the port is not in use by another process.
+### Cannot start daemon
+
+If you have issues starting the daemon, make sure that no other process is using port `48126`.
+
+### Weird lint results
+
+If you experience linting related issues and aren't getting correct results, stop the daemonized version and run the following command:
+
+```bash
+> node ./node_modules/stylelint_d/dist/src/daemon.js
+```
+
+And try to lint your file again. If you get a stack trace or some unexpectedly logged error, please create an issue.
 
 ## Issues and Pull Requests
 
-If you find an issue or bug, create an issue with the following information: your `stylelint_d` version, `stylelint` version, OS, and the layout of the config file and files that you're attempting to lint. If you received a stack trace, include that as well.
+If you find an bug or something isn't quite right, create an issue with the following information: your `stylelint_d` version, `stylelint` version, OS, and the layout of the config file and files that you're attempting to lint. If you received a stack trace, include that as well.
 
-I welcome PRs! 
+I welcome PRs! 🙂
 
 ## License
 
