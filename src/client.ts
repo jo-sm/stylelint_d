@@ -1,11 +1,15 @@
 import minimist from "minimist";
 import resolve from "resolve";
 import * as path from "path";
+import camelCase from "lodash.camelcase";
 import { version as packageVersion } from "../package.json";
 import { Socket } from "../src/Socket";
 import { readStdin, spawnDaemon, daemonRunning } from "../src/utils";
 import { Command, LintArguments, Response, Request, ClientResult } from "../src/types";
 
+/**
+ * Prints the help message.
+ */
 function generateHelpMessage() {
   return `Usage: stylelint_d command | lint options
 
@@ -40,6 +44,28 @@ Returns this help message.
 `;
 }
 
+/**
+ * Translate the given minimist arguments to camelcase.
+ *
+ * @param  flagArgs
+ * @returns camelcased keys of given minimist flags
+ */
+function processFlagArgs(flagArgs: Omit<minimist.ParsedArgs, "_">): LintArguments {
+  const args: { [key: string]: any } = {};
+
+  for (const key in flagArgs) {
+    args[camelCase(key)] = flagArgs[key];
+  }
+
+  return args as LintArguments;
+}
+
+/**
+ * Runs the given arguments (from argv).
+ *
+ * @param  argv Arguments given from process.argv
+ * @returns a lint or command result, or error
+ */
 export async function client(argv: string[]): Promise<ClientResult> {
   const parsedArgv: minimist.ParsedArgs = minimist(argv, {
     boolean: ["quiet", "stdin"],
@@ -66,7 +92,7 @@ export async function client(argv: string[]): Promise<ClientResult> {
   }
 
   if (command === Command.LINT) {
-    lintArguments = flagArgs as LintArguments;
+    lintArguments = processFlagArgs(flagArgs);
 
     // A few commands need to be preprocessed before passing to the linter.
     // We need to do this since the official CLI does this too. It's not ideal
@@ -90,7 +116,7 @@ export async function client(argv: string[]): Promise<ClientResult> {
 
     if (lintArguments.stdinFilename) {
       if (lintArguments.code) {
-        lintArguments.codeFilename = flagArgs.stdinFilename;
+        lintArguments.codeFilename = lintArguments.stdinFilename;
       }
 
       delete lintArguments.stdinFilename;

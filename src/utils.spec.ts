@@ -22,6 +22,7 @@ describe("utils", () => {
   afterEach(() => {
     socketOnceHandlers = {};
   });
+
   describe("encode", () => {
     it("should transform a JSON serializable object into a base64 string", () => {
       expect(utils.encode({ hello: "world" })).toStrictEqual("eyJoZWxsbyI6IndvcmxkIn0=");

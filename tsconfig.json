@@ -4,5 +4,6 @@
     "resolveJsonModule": true,
     "outDir": "dist"
   },
-  "include": ["src/**/*", "bin/**/*"]
+  "include": ["src/**/*.ts", "bin/**/*.ts"],
+  "exclude": ["**/*.spec.ts"]
 }

@@ -255,7 +255,7 @@ describe("client", () => {
 
       const { socket } = setup();
 
-      await client(["--stdin", "--stdinFilename", "/path/to/some/filename.css"]);
+      await client(["--stdin", "--stdin-filename", "/path/to/some/filename.css"]);
 
       expect(socket.send).toBeCalledWith({
         command: Command.LINT,
@@ -271,7 +271,7 @@ describe("client", () => {
     it("should ignore the codeFilename flag is no stdin was needed", async () => {
       const { socket } = setup();
 
-      await client(["/some/css/file.css", "--stdinFilename", "/path/to/some/filename.css"]);
+      await client(["/some/css/file.css", "--stdin-filename", "/path/to/some/filename.css"]);
 
       expect(socket.send).toBeCalledWith({
         command: Command.LINT,
@@ -325,7 +325,7 @@ describe("client", () => {
     it("should add the config basedir to arguments if provided", async () => {
       const { socket } = setup();
 
-      await client(["file.css", "--configBasedir", "/some/configbasedir"]);
+      await client(["file.css", "--config-basedir", "/some/configbasedir"]);
 
       expect(socket.send).toBeCalledWith({
         command: Command.LINT,
@@ -341,7 +341,7 @@ describe("client", () => {
     it("should make the config basedir argument absolute if it is a relative path", async () => {
       const { socket } = setup();
 
-      await client(["file.css", "--configBasedir", "configbasedir"]);
+      await client(["file.css", "--config-basedir", "configbasedir"]);
 
       expect(socket.send).toBeCalledWith({
         command: Command.LINT,
@@ -357,7 +357,7 @@ describe("client", () => {
     it("should make the config basedir argument absolute if it is a relative path", async () => {
       const { socket } = setup();
 
-      await client(["file.css", "--configBasedir", "configbasedir"]);
+      await client(["file.css", "--config-basedir", "configbasedir"]);
 
       expect(socket.send).toBeCalledWith({
         command: Command.LINT,
@@ -373,7 +373,7 @@ describe("client", () => {
     it("should add customFormatter to the arguments if provided", async () => {
       const { socket } = setup();
 
-      await client(["file.css", "--customFormatter", "/some/custom/formatter.js"]);
+      await client(["file.css", "--custom-formatter", "/some/custom/formatter.js"]);
 
       expect(socket.send).toBeCalledWith({
         command: Command.LINT,
@@ -387,7 +387,7 @@ describe("client", () => {
     });
 
     it("should attempt to resolve the customFromatter file if it's relative", async () => {
-      await client(["file.css", "--customFormatter", "formatter.js"]);
+      await client(["file.css", "--custom-formatter", "formatter.js"]);
 
       expect(resolve.sync).toBeCalled();
     });
@@ -395,7 +395,7 @@ describe("client", () => {
     it("should add make the customFormatter path absolute if it's relative", async () => {
       const { socket } = setup();
 
-      await client(["file.css", "--customFormatter", "formatter.js"]);
+      await client(["file.css", "--custom-formatter", "formatter.js"]);
 
       expect(socket.send).toBeCalledWith({
         command: Command.LINT,

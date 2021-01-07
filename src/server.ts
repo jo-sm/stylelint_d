@@ -50,7 +50,7 @@ export class Server {
     const socket = new Socket(rawSocket, "server");
 
     try {
-      await this.onConnection(socket);
+      await this.processSocket(socket);
     } catch (error) {
       if (socket.writable) {
         socket.send<Response>({
@@ -73,7 +73,7 @@ export class Server {
     this.fireEvent("restart");
   }
 
-  private async onConnection(socket: Socket): Promise<void> {
+  private async processSocket(socket: Socket): Promise<void> {
     let data;
 
     try {
