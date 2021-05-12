@@ -441,9 +441,9 @@ describe("client", () => {
 });
 
 function setup() {
-  (MockedSocket.createClientSocket as jest.MockedFunction<
-    typeof MockedSocket.createClientSocket
-  >).mockImplementation((): Promise<Socket> => Promise.resolve(MockedSocket.prototype));
+  (
+    MockedSocket.createClientSocket as jest.MockedFunction<typeof MockedSocket.createClientSocket>
+  ).mockImplementation((): Promise<Socket> => Promise.resolve(MockedSocket.prototype));
 
   MockedSocket.prototype.getData.mockResolvedValue({});
 

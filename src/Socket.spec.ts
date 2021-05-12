@@ -12,20 +12,20 @@ describe("Socket", () => {
   let eventHandlers: any = {};
 
   beforeEach(() => {
-    getNetSocketSpy = jest.spyOn(utils, "getNetSocket").mockImplementation(
-      (): Promise<net.Socket> => {
-        const result: any = ({
+    getNetSocketSpy = jest
+      .spyOn(utils, "getNetSocket")
+      .mockImplementation((): Promise<net.Socket> => {
+        const result: any = {
           on: jest.fn((eventName: string, cb: any) => {
             eventHandlers[eventName] = cb;
           }),
           end: jest.fn(),
           write: jest.fn(),
           destroy: jest.fn(),
-        } as unknown) as net.Socket;
+        } as unknown as net.Socket;
 
         return Promise.resolve(result);
-      }
-    );
+      });
   });
 
   afterEach(() => {
