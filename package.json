@@ -41,7 +41,9 @@
   "scripts": {
     "build": "tsc",
     "build:watch": "tsc --watch",
-    "lint": "eslint src/**/* bin/**/*",
+    "lint:eslint": "eslint src/**/* bin/**/*",
+    "lint:prettier": "prettier -c src/**/* bin/**/*",
+    "lint:types": "tsc --noEmit",
     "test": "jest",
     "test:watch": "jest --watch"
   }

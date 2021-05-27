@@ -22,5 +22,7 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
       - run: npm ci
-      - run: npm run lint
+      - run: npm run lint:prettier
+      - run: npm run lint:eslint
+      - run: npm run lint:types
       - run: npm test

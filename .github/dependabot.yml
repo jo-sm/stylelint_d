@@ -6,3 +6,5 @@ updates:
     directory: "/"
     schedule:
       interval: "daily"
+    labels:
+      - "dependabot"

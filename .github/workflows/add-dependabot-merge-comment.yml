@@ -1,0 +1,23 @@
+name: Add merge comment to successful PRs for dependabot
+
+on:
+  workflow_run:
+    workflows: ["Run tests"]
+    types:
+      - completed
+
+jobs:
+  create_dependabot_comment:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.event == 'pull_request' && github.event.workflow_run.conclusion == 'success' }}
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v1
+        with:
+          node-version: 12
+      - name: Add merge comment for dependabot PRs
+        id: add-merge-comment
+        uses: ./.github/actions/create-dependabot-comment
+        with:
+          run-id: ${{ github.event.workflow_run.id }}
+          token: ${{ secrets.GITHUB_TOKEN }}
