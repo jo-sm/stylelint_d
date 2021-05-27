@@ -21,4 +21,8 @@ jobs:
         uses: ./.github/actions/create-dependabot-comment
         with:
           run-id: ${{ github.event.workflow_run.id }}
-          token: ${{ secrets.GITHUB_TOKEN }}
+          # Have to use the personal access token, as the GITHUB_TOKEN doesn't have the right
+          # permissions. Dependabot gives this error when using GITHUB_TOKEN:
+          #
+          # Sorry, only users with push access can use that command.
+          token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
