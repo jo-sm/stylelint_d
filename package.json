@@ -12,6 +12,8 @@
     "stylelint": "^13.8.0"
   },
   "devDependencies": {
+    "@actions/core": "^1.3.0",
+    "@actions/github": "^5.0.0",
     "@tsconfig/node12": "^1.0.7",
     "@types/glob": "^7.1.3",
     "@types/jest": "^26.0.19",
