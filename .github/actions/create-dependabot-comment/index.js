@@ -28,11 +28,11 @@ async function main() {
   }
 
   // Not sure why this would happen... but, pull_requests is an array, so we should account for the possibility
-  if (runData.pullRequests.length !== 1) {
-    throw new Error(`Workflow run ID ${runId} associated with ${runData.pullRequests.length} PRs. Expected only 1.`);
+  if (runData.pull_requests.length !== 1) {
+    throw new Error(`Workflow run ID ${runId} associated with ${runData.pull_requests.length} PRs. Expected only 1.`);
   }
 
-  const prNumber = runData.pullRequests[0].number;
+  const prNumber = runData.pull_requests[0].number;
 
   const { data: { user: { login: prCreatorUsername, type: prCreatorType } } } = await getPull({
     owner,
