@@ -38,7 +38,7 @@ describe("Socket", () => {
       const socket = await Socket.createClientSocket();
 
       expect(socket).toBeInstanceOf(Socket);
-      expect(utils.getNetSocket).toBeCalledTimes(1);
+      expect(utils.getNetSocket).toHaveBeenCalledTimes(1);
     });
 
     it("should attempt to make a new socket until one is successfully created", async () => {
@@ -48,7 +48,7 @@ describe("Socket", () => {
 
       await Socket.createClientSocket();
 
-      expect(utils.getNetSocket).toBeCalledTimes(4);
+      expect(utils.getNetSocket).toHaveBeenCalledTimes(4);
     });
   });
 
@@ -58,9 +58,9 @@ describe("Socket", () => {
 
       new Socket(rawSocket, "client");
 
-      expect(rawSocket.on).toBeCalledWith("data", expect.any(Function));
-      expect(rawSocket.on).toBeCalledWith("close", expect.any(Function));
-      expect(rawSocket.on).toBeCalledWith("end", expect.any(Function));
+      expect(rawSocket.on).toHaveBeenCalledWith("data", expect.any(Function));
+      expect(rawSocket.on).toHaveBeenCalledWith("close", expect.any(Function));
+      expect(rawSocket.on).toHaveBeenCalledWith("end", expect.any(Function));
     });
   });
 
@@ -110,8 +110,8 @@ describe("Socket", () => {
       socket.send(data);
 
       expect(rawSocket.write).toHaveBeenCalledTimes(1);
-      expect(rawSocket.write).toBeCalledWith(utils.encode(data));
-      expect(rawSocket.end).toBeCalled();
+      expect(rawSocket.write).toHaveBeenCalledWith(utils.encode(data));
+      expect(rawSocket.end).toHaveBeenCalled();
     });
 
     it(`should break data that's larger than 512 characters into multiple chunks`, async () => {
@@ -190,15 +190,7 @@ describe("Socket", () => {
       eventHandlers.data(Buffer.from("gibberish"));
       eventHandlers.close();
 
-      let err;
-
-      try {
-        await socket.getData();
-      } catch (e) {
-        err = e;
-      }
-
-      expect(err).toBeInstanceOf(Error);
+      await expect(socket.getData()).rejects.toBeInstanceOf(Error);
     });
 
     it("should resolve with nothing and destroy the socket if no data was sent", async () => {
@@ -208,7 +200,7 @@ describe("Socket", () => {
       eventHandlers.end();
 
       expect(await socket.getData()).toBeUndefined();
-      expect(rawSocket.destroy).toBeCalled();
+      expect(rawSocket.destroy).toHaveBeenCalled();
     });
   });
 });

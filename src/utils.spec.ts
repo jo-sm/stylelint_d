@@ -104,7 +104,7 @@ describe("utils", () => {
 
       socketOnceHandlers.connect();
 
-      expect(promise).resolves.toBe(true);
+      await expect(promise).resolves.toBe(true);
     });
 
     it("should resolve false if the socket fails to conenct to the server", async () => {
@@ -112,7 +112,7 @@ describe("utils", () => {
 
       socketOnceHandlers.error();
 
-      expect(promise).resolves.toBe(false);
+      await expect(promise).resolves.toBe(false);
     });
   });
 
@@ -135,7 +135,7 @@ describe("utils", () => {
 
       socketOnceHandlers.connect();
 
-      expect(promise).rejects.toThrow();
+      await expect(promise).rejects.toThrow();
     });
   });
 
@@ -156,7 +156,7 @@ describe("utils", () => {
 
       socketOnceHandlers.error();
 
-      expect(promise).rejects.toThrow();
+      await expect(promise).rejects.toThrow();
     });
   });
 });

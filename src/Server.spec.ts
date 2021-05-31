@@ -1,21 +1,17 @@
 import net from "net";
 import resolve from "resolve";
-import { lint as _lint } from "stylelint";
+import stylelint from "stylelint";
 import { Server } from "./Server";
 import { Socket } from "./Socket";
 import { Command, Request } from "./types";
+import * as path from "path";
 
 jest.mock("net");
 jest.mock("./Socket");
 
-jest.mock("stylelint", () => ({
-  lint: jest.fn(),
-}));
-
 const SocketMock = Socket as jest.MockedClass<typeof Socket>;
 const netServer = net.Server as jest.MockedClass<typeof net.Server>;
 const netCreateServer = net.createServer as jest.MockedFunction<typeof net.createServer>;
-const lint = _lint as jest.MockedFunction<typeof _lint>;
 
 describe("Server", () => {
   let resolveSyncSpy: jest.SpyInstance;
@@ -34,7 +30,7 @@ describe("Server", () => {
 
       server.end();
 
-      expect(netServer.prototype.close).toBeCalledTimes(1);
+      expect(netServer.prototype.close).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -43,7 +39,7 @@ describe("Server", () => {
       it("should send an error response if the socket rejects when getting data", async () => {
         await setup(new Error("bad data"));
 
-        expect(SocketMock.prototype.send).toBeCalledWith({
+        expect(SocketMock.prototype.send).toHaveBeenCalledWith({
           status: "error",
           command: "unknown",
           message: "Invalid client JSON",
@@ -57,7 +53,7 @@ describe("Server", () => {
           server.on("log", handleLog);
         });
 
-        expect(handleLog).toBeCalledTimes(1);
+        expect(handleLog).toHaveBeenCalledTimes(1);
       });
     });
 
@@ -67,7 +63,7 @@ describe("Server", () => {
           command: Command.STOP,
         });
 
-        expect(socket.send).toBeCalledWith({
+        expect(socket.send).toHaveBeenCalledWith({
           status: "ok",
           command: Command.STOP,
           message: "stylelint_d stopping...",
@@ -81,7 +77,7 @@ describe("Server", () => {
           server.on("stop", handleStop);
         });
 
-        expect(handleStop).toBeCalledTimes(1);
+        expect(handleStop).toHaveBeenCalledTimes(1);
       });
     });
 
@@ -91,8 +87,8 @@ describe("Server", () => {
           command: Command.RESTART,
         });
 
-        expect(netServer.prototype.close).toBeCalledTimes(1);
-        expect(netCreateServer).toBeCalledTimes(2);
+        expect(netServer.prototype.close).toHaveBeenCalledTimes(1);
+        expect(netCreateServer).toHaveBeenCalledTimes(2);
       });
 
       it("should send an appropriate message on the socket", async () => {
@@ -100,7 +96,7 @@ describe("Server", () => {
           command: Command.RESTART,
         });
 
-        expect(socket.send).toBeCalledWith({
+        expect(socket.send).toHaveBeenCalledWith({
           status: "ok",
           command: Command.RESTART,
           message: "stylelint_d restarting...",
@@ -119,11 +115,25 @@ describe("Server", () => {
           }
         );
 
-        expect(handleRestart).toBeCalledTimes(1);
+        expect(handleRestart).toHaveBeenCalledTimes(1);
       });
     });
 
     describe("lint command", () => {
+      let lintSpy: jest.SpyInstance;
+
+      beforeEach(() => {
+        lintSpy = jest.spyOn(stylelint, "lint").mockResolvedValue({
+          errored: false,
+          output: "",
+          results: [],
+        });
+      });
+
+      afterEach(() => {
+        lintSpy.mockRestore();
+      });
+
       describe("stylelint module path resolution", () => {
         it("should use the configFile path as the basedir if provided", async () => {
           await setup({
@@ -135,7 +145,7 @@ describe("Server", () => {
             cwd: "/the/cwd",
           });
 
-          expect(resolve.sync).toBeCalledWith("stylelint", { basedir: "/path/to/config" });
+          expect(resolve.sync).toHaveBeenCalledWith("stylelint", { basedir: "/path/to/config" });
         });
 
         it("should get the path from a given glob", async () => {
@@ -147,7 +157,7 @@ describe("Server", () => {
             cwd: "/the/cwd",
           });
 
-          expect(resolve.sync).toBeCalledWith("stylelint", { basedir: "/the/cwd/some/path" });
+          expect(resolve.sync).toHaveBeenCalledWith("stylelint", { basedir: "/the/cwd/some/path" });
         });
 
         it("should handle absolute path globs if given", async () => {
@@ -159,7 +169,9 @@ describe("Server", () => {
             cwd: "/the/cwd",
           });
 
-          expect(resolve.sync).toBeCalledWith("stylelint", { basedir: "/some/absolute/path" });
+          expect(resolve.sync).toHaveBeenCalledWith("stylelint", {
+            basedir: "/some/absolute/path",
+          });
         });
 
         it("should get the path from the first file, if it is not a glob and is absolute", async () => {
@@ -171,7 +183,7 @@ describe("Server", () => {
             cwd: "/the/cwd",
           });
 
-          expect(resolve.sync).toBeCalledWith("stylelint", { basedir: "/a/path/to/some" });
+          expect(resolve.sync).toHaveBeenCalledWith("stylelint", { basedir: "/a/path/to/some" });
         });
 
         it("should get the path from the first file resolved to the client cwd, if it is not absolute", async () => {
@@ -183,7 +195,7 @@ describe("Server", () => {
             cwd: "/the/cwd",
           });
 
-          expect(resolve.sync).toBeCalledWith("stylelint", { basedir: "/the/cwd/to/some" });
+          expect(resolve.sync).toHaveBeenCalledWith("stylelint", { basedir: "/the/cwd/to/some" });
         });
 
         it("should use the client cwd otherwise", async () => {
@@ -193,7 +205,7 @@ describe("Server", () => {
             cwd: "/the/cwd",
           });
 
-          expect(resolve.sync).toBeCalledWith("stylelint", { basedir: "/the/cwd" });
+          expect(resolve.sync).toHaveBeenCalledWith("stylelint", { basedir: "/the/cwd" });
         });
 
         it("should use the package provided stylelint module if the path does not resolve to a stylelint module", async () => {
@@ -207,7 +219,7 @@ describe("Server", () => {
             cwd: "/the/cwd",
           });
 
-          expect(resolve.sync).toBeCalledTimes(2);
+          expect(resolve.sync).toHaveBeenCalledTimes(2);
           expect(resolve.sync).toHaveBeenNthCalledWith(1, "stylelint", { basedir: "/the/cwd" });
           expect(resolve.sync).toHaveBeenNthCalledWith(2, "stylelint");
         });
@@ -222,7 +234,7 @@ describe("Server", () => {
           },
         } as any;
 
-        lint.mockResolvedValueOnce(lintResult);
+        lintSpy.mockResolvedValueOnce(lintResult);
 
         const { socket } = await setup({
           command: Command.LINT,
@@ -230,7 +242,7 @@ describe("Server", () => {
           cwd: "/the/cwd",
         });
 
-        expect(socket.send).toBeCalledWith({
+        expect(socket.send).toHaveBeenCalledWith({
           status: "ok",
           command: Command.LINT,
           output: lintResult.output,
@@ -242,7 +254,7 @@ describe("Server", () => {
         const error = new Error("bad linting");
         Object.assign(error, { code: 123 });
 
-        lint.mockRejectedValueOnce(error);
+        lintSpy.mockRejectedValueOnce(error);
 
         const { socket } = await setup({
           command: Command.LINT,
@@ -250,13 +262,122 @@ describe("Server", () => {
           cwd: "/the/cwd",
         });
 
-        expect(socket.send).toBeCalledWith({
+        expect(socket.send).toHaveBeenCalledWith({
           status: "error",
           command: Command.LINT,
           message: error.message,
           metadata: {
             code: 123,
           },
+        });
+      });
+    });
+
+    describe("stylelint.lint integration", () => {
+      it("should properly lint a file with no errors", async () => {
+        const filename = path.resolve(__dirname, "fixtures", "ok.css");
+
+        const expectedOutput = [
+          {
+            source: filename,
+            deprecations: [],
+            invalidOptionWarnings: [],
+            parseErrors: [],
+            errored: false,
+            warnings: [],
+          },
+        ];
+
+        const { socket } = await setup({
+          command: Command.LINT,
+          lintArguments: {
+            files: [filename],
+            configFile: path.resolve(__dirname, "fixtures", "stylelint.config.json"),
+          },
+          cwd: __dirname,
+        });
+
+        expect(socket.send).toHaveBeenCalledWith({
+          status: "ok",
+          command: Command.LINT,
+          output: JSON.stringify(expectedOutput),
+          errored: false,
+        });
+      });
+
+      it("should properly lint a file with errors", async () => {
+        const filename = path.resolve(__dirname, "fixtures", "not-ok.css");
+        const expectedOutput = [
+          {
+            source: filename,
+            deprecations: [],
+            invalidOptionWarnings: [],
+            parseErrors: [],
+            errored: true,
+            warnings: [
+              {
+                line: 2,
+                column: 10,
+                rule: "color-no-invalid-hex",
+                severity: "error",
+                text: `Unexpected invalid hex color "#ff" (color-no-invalid-hex)`,
+              },
+            ],
+          },
+        ];
+
+        const { socket } = await setup({
+          command: Command.LINT,
+          lintArguments: {
+            files: [filename],
+            configFile: path.resolve(__dirname, "fixtures", "stylelint.config.json"),
+          },
+          cwd: __dirname,
+        });
+
+        expect(socket.send).toHaveBeenCalledWith({
+          status: "ok",
+          command: Command.LINT,
+          output: JSON.stringify(expectedOutput),
+          errored: true,
+        });
+      });
+
+      it("should handle an invalid css file", async () => {
+        const filename = path.resolve(__dirname, "fixtures", "invalid.css");
+        const expectedOutput = [
+          {
+            source: filename,
+            deprecations: [],
+            invalidOptionWarnings: [],
+            parseErrors: [],
+            errored: true,
+            warnings: [
+              {
+                line: 1,
+                column: 1,
+                rule: "CssSyntaxError",
+                severity: "error",
+                text: `Unclosed block (CssSyntaxError)`,
+              },
+            ],
+          },
+        ];
+
+        const { socket } = await setup({
+          command: Command.LINT,
+          lintArguments: {
+            files: [filename],
+            configFile: path.resolve(__dirname, "fixtures", "stylelint.config.json"),
+          },
+          cwd: __dirname,
+        });
+
+        expect(socket.send).toHaveBeenCalledWith({
+          status: "ok",
+          command: Command.LINT,
+          output: JSON.stringify(expectedOutput),
+          errored: true,
         });
       });
     });

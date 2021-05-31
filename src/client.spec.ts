@@ -53,7 +53,7 @@ describe("client", () => {
         message: "stylelint_d started.",
       });
 
-      expect(utils.spawnDaemon).toBeCalled();
+      expect(utils.spawnDaemon).toHaveBeenCalled();
     });
   });
 
@@ -80,7 +80,7 @@ describe("client", () => {
         message: "stylelint_d stopping... ok.",
       });
 
-      expect(socket.send).toBeCalledWith({
+      expect(socket.send).toHaveBeenCalledWith({
         command: Command.STOP,
         cwd: expect.any(String),
         lintArguments: {},
@@ -128,7 +128,7 @@ describe("client", () => {
         message: "stylelint_d restarting... ok.",
       });
 
-      expect(socket.send).toBeCalledWith({
+      expect(socket.send).toHaveBeenCalledWith({
         command: Command.RESTART,
         cwd: expect.any(String),
         lintArguments: {},
@@ -210,7 +210,7 @@ describe("client", () => {
 
       await client(["some/file.css", "some/otherfile.css"]);
 
-      expect(socket.send).toBeCalledWith({
+      expect(socket.send).toHaveBeenCalledWith({
         command: Command.LINT,
         cwd: expect.any(String),
         lintArguments: {
@@ -225,7 +225,7 @@ describe("client", () => {
 
       await client(["--quiet", "some/file.css"]);
 
-      expect(socket.send).toBeCalledWith({
+      expect(socket.send).toHaveBeenCalledWith({
         command: Command.LINT,
         cwd: expect.any(String),
         lintArguments: {
@@ -241,13 +241,13 @@ describe("client", () => {
     it("should read from stdin if no files are given, even if another flag is passed", async () => {
       await client(["--quiet"]);
 
-      expect(utils.readStdin).toBeCalledTimes(1);
+      expect(utils.readStdin).toHaveBeenCalledTimes(1);
     });
 
     it("should read from stdin if the stdin flag is passed", async () => {
       await client(["--stdin"]);
 
-      expect(utils.readStdin).toBeCalledTimes(1);
+      expect(utils.readStdin).toHaveBeenCalledTimes(1);
     });
 
     it("should set the provided stdin text as the code argument", async () => {
@@ -257,7 +257,7 @@ describe("client", () => {
 
       await client(["--stdin", "--stdin-filename", "/path/to/some/filename.css"]);
 
-      expect(socket.send).toBeCalledWith({
+      expect(socket.send).toHaveBeenCalledWith({
         command: Command.LINT,
         cwd: expect.any(String),
         lintArguments: {
@@ -273,7 +273,7 @@ describe("client", () => {
 
       await client(["/some/css/file.css", "--stdin-filename", "/path/to/some/filename.css"]);
 
-      expect(socket.send).toBeCalledWith({
+      expect(socket.send).toHaveBeenCalledWith({
         command: Command.LINT,
         cwd: expect.any(String),
         lintArguments: {
@@ -288,7 +288,7 @@ describe("client", () => {
 
       await client(["file.css", "--config", "/config/file.json"]);
 
-      expect(socket.send).toBeCalledWith({
+      expect(socket.send).toHaveBeenCalledWith({
         command: Command.LINT,
         cwd: expect.any(String),
         lintArguments: {
@@ -303,7 +303,7 @@ describe("client", () => {
       // We don't test the output here because file.json will not resolve to a real file when testing
       await client(["file.css", "--config", "file.json"]);
 
-      expect(resolve.sync).toBeCalled();
+      expect(resolve.sync).toHaveBeenCalled();
     });
 
     it("should turn the config file path into an absolute path if it is relative", async () => {
@@ -311,7 +311,7 @@ describe("client", () => {
 
       await client(["file.css", "--config", "file.json"]);
 
-      expect(socket.send).toBeCalledWith({
+      expect(socket.send).toHaveBeenCalledWith({
         command: Command.LINT,
         cwd: expect.any(String),
         lintArguments: {
@@ -327,7 +327,7 @@ describe("client", () => {
 
       await client(["file.css", "--config-basedir", "/some/configbasedir"]);
 
-      expect(socket.send).toBeCalledWith({
+      expect(socket.send).toHaveBeenCalledWith({
         command: Command.LINT,
         cwd: expect.any(String),
         lintArguments: {
@@ -343,23 +343,7 @@ describe("client", () => {
 
       await client(["file.css", "--config-basedir", "configbasedir"]);
 
-      expect(socket.send).toBeCalledWith({
-        command: Command.LINT,
-        cwd: expect.any(String),
-        lintArguments: {
-          files: ["file.css"],
-          configBasedir: `${process.cwd()}/configbasedir`,
-          formatter: "string",
-        },
-      });
-    });
-
-    it("should make the config basedir argument absolute if it is a relative path", async () => {
-      const { socket } = setup();
-
-      await client(["file.css", "--config-basedir", "configbasedir"]);
-
-      expect(socket.send).toBeCalledWith({
+      expect(socket.send).toHaveBeenCalledWith({
         command: Command.LINT,
         cwd: expect.any(String),
         lintArguments: {
@@ -375,7 +359,7 @@ describe("client", () => {
 
       await client(["file.css", "--custom-formatter", "/some/custom/formatter.js"]);
 
-      expect(socket.send).toBeCalledWith({
+      expect(socket.send).toHaveBeenCalledWith({
         command: Command.LINT,
         cwd: expect.any(String),
         lintArguments: {
@@ -389,7 +373,7 @@ describe("client", () => {
     it("should attempt to resolve the customFromatter file if it's relative", async () => {
       await client(["file.css", "--custom-formatter", "formatter.js"]);
 
-      expect(resolve.sync).toBeCalled();
+      expect(resolve.sync).toHaveBeenCalled();
     });
 
     it("should add make the customFormatter path absolute if it's relative", async () => {
@@ -397,7 +381,7 @@ describe("client", () => {
 
       await client(["file.css", "--custom-formatter", "formatter.js"]);
 
-      expect(socket.send).toBeCalledWith({
+      expect(socket.send).toHaveBeenCalledWith({
         command: Command.LINT,
         cwd: expect.any(String),
         lintArguments: {
