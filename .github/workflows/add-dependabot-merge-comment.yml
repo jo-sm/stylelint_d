@@ -11,18 +11,9 @@ jobs:
     runs-on: ubuntu-latest
     if: ${{ github.event.workflow_run.event == 'pull_request' && github.event.workflow_run.conclusion == 'success' }}
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-node@v1
-        with:
-          node-version: 12
-      - run: npm ci
       - name: Add merge comment for dependabot PRs
         id: add-merge-comment
-        uses: ./.github/actions/create-dependabot-comment
+        uses: jo-sm/at-dependabot-merge@v1
         with:
           run-id: ${{ github.event.workflow_run.id }}
-          # Have to use the personal access token, as the GITHUB_TOKEN doesn't have the right
-          # permissions. Dependabot gives this error when using GITHUB_TOKEN:
-          #
-          # Sorry, only users with push access can use that command.
           token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
