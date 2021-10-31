@@ -164,6 +164,7 @@ describe("Server", () => {
           errored: false,
           output: "",
           results: [],
+          reportedDisables: [],
         });
       });
 
@@ -334,6 +335,10 @@ describe("Server", () => {
           cwd: __dirname,
         });
 
+        // In my opinion, a snapshot assertion would be nice here as it would remove the need to have an object
+        // above that has specific key orders (it has to match the JSON.stringify result). However it's not possible
+        // on either `socket.send.mock.calls[0]` or `mock.calls[0][0].output` as both would contain an absolute
+        // path and wouldn't work across different machines.
         expect(socket.send).toHaveBeenCalledWith({
           status: "ok",
           command: Command.LINT,
