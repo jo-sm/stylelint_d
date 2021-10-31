@@ -48,12 +48,49 @@ describe("Server", () => {
 
       it("should fire a log event of the incoming command", async () => {
         const handleLog = jest.fn();
+        const error = new Error("bad data");
 
-        await setup(new Error("bad data"), (server) => {
+        await setup(error, (server) => {
           server.on("log", handleLog);
         });
 
         expect(handleLog).toHaveBeenCalledTimes(1);
+        expect(handleLog).toHaveBeenCalledWith({ error });
+      });
+    });
+
+    describe("thrown error after parsing", () => {
+      it("should send an error response if there was some error after getting data", async () => {
+        // @ts-expect-error: FIXME the test should stop mocking Socket. Treat Server as an integration test
+        SocketMock.prototype.writable = true;
+
+        await setup({
+          command: Command.__TEST_FAIL__,
+        });
+
+        expect(SocketMock.prototype.send).toHaveBeenCalledWith({
+          status: "error",
+          command: "unknown",
+          message: "A server error occurred: An expected test failure occurred",
+        });
+      });
+
+      it("should log the error", async () => {
+        const handleLog = jest.fn();
+
+        await setup({ command: Command.__TEST_FAIL__ }, (server) => {
+          server.on("log", handleLog);
+        });
+
+        expect(handleLog).toHaveBeenCalledTimes(2);
+        expect(handleLog).toHaveBeenNthCalledWith(1, {
+          message: `Command received: ${Command.__TEST_FAIL__}`,
+        });
+        expect(handleLog).toHaveBeenNthCalledWith(2, {
+          error: expect.objectContaining({
+            message: "An expected test failure occurred",
+          }),
+        });
       });
     });
 
