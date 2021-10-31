@@ -87,17 +87,23 @@ export class Server {
     try {
       await this.processSocket(socket);
     } catch (error) {
-      if (socket.writable) {
-        socket.send<Response>({
-          status: "error",
-          command: "unknown",
-          message: `A server error occurred: ${error.message}`,
-        });
+      this.fireEvent("log", {
+        error,
+      });
+
+      const response: Response = {
+        status: "error",
+        command: "unknown",
+        message: "An unexpected server error occurred",
+      };
+
+      if (error instanceof Error) {
+        response.message = `A server error occurred: ${error.message}`;
       }
 
-      this.fireEvent("log", {
-        message: error.message,
-      });
+      if (socket.writable) {
+        socket.send<Response>(response);
+      }
     }
   }
 
@@ -121,7 +127,7 @@ export class Server {
 
     try {
       data = await socket.getData<Request>();
-    } catch (err) {
+    } catch (error) {
       await socket.send<Response>({
         status: "error",
         command: "unknown",
@@ -129,7 +135,7 @@ export class Server {
       });
 
       this.fireEvent("log", {
-        message: err.message,
+        error,
       });
 
       return;
@@ -144,6 +150,12 @@ export class Server {
     this.fireEvent("log", {
       message: `Command received: ${command}`,
     });
+
+    // This is not ideal because we're creating a custom command just to test this case. Further thought into how to make this
+    // testable _without_ needing Command.__TEST_FAIL__ will happen later.
+    if (command === Command.__TEST_FAIL__) {
+      throw new Error("An expected test failure occurred");
+    }
 
     if (command === Command.STOP) {
       await socket.send<Response>({
@@ -233,13 +245,17 @@ export class Server {
 
     try {
       result = await linter(lintArguments);
-    } catch (err) {
+    } catch (error) {
+      // We don't know the error type and the possible types aren't exported in any way from Stylelint, so
+      // we can just cast to any and get message and code from it
+      const { message, code } = error as any;
+
       await socket.send<Response>({
         status: "error",
         command,
-        message: err.message,
+        message,
         metadata: {
-          code: err.code,
+          code: typeof code === "number" ? code : 1,
         },
       });
 

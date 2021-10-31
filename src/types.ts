@@ -9,6 +9,7 @@ export enum Command {
   STATUS = "status",
   HELP = "help",
   __TEST__ = "__test__",
+  __TEST_FAIL__ = "__test_fail__",
 }
 
 export interface LintArguments {
@@ -33,7 +34,7 @@ export interface LintArguments {
 }
 
 interface NonLintRequest {
-  command: Command.STOP | Command.RESTART | Command.__TEST__;
+  command: Command.STOP | Command.RESTART | Command.__TEST__ | Command.__TEST_FAIL__;
 }
 
 export interface LintRequest {
@@ -53,7 +54,7 @@ interface ErrorResponse {
 
 interface NonLintResponse {
   status: "ok";
-  command: Command.STOP | Command.RESTART | Command.__TEST__;
+  command: Command.STOP | Command.RESTART | Command.__TEST__ | Command.__TEST_FAIL__;
   message: string;
 }
 
