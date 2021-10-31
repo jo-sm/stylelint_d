@@ -25,7 +25,7 @@ describe("utils", () => {
 
   describe("encode", () => {
     it("should transform a JSON serializable object into a base64 string", () => {
-      expect(utils.encode({ hello: "world" })).toStrictEqual("eyJoZWxsbyI6IndvcmxkIn0=");
+      expect(utils.encode({ hello: "world" })).toBe("eyJoZWxsbyI6IndvcmxkIn0=");
     });
   });
 
@@ -60,7 +60,7 @@ describe("utils", () => {
 
       eventHandlers.end();
 
-      expect(await resultPromise).toStrictEqual("");
+      expect(await resultPromise).toBe("");
     });
 
     it("should return a concatenated string of non-null values read from stdin", async () => {
@@ -73,7 +73,7 @@ describe("utils", () => {
 
       eventHandlers.end();
 
-      expect(await resultPromise).toStrictEqual("hello2world");
+      expect(await resultPromise).toBe("hello2world");
     });
   });
 

@@ -155,7 +155,7 @@ describe("Socket", () => {
       eventHandlers.end();
 
       await wait();
-      expect(data).not.toBeUndefined();
+      expect(data).toBeDefined();
     });
 
     it("should resolve data when the socket close event is fired and the instance is of kind client", async () => {
@@ -181,7 +181,7 @@ describe("Socket", () => {
       eventHandlers.close();
 
       await wait();
-      expect(data).not.toBeUndefined();
+      expect(data).toBeDefined();
     });
 
     it("should reject if the data could not be properly decoded", async () => {
