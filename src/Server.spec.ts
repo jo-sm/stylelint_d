@@ -165,6 +165,7 @@ describe("Server", () => {
           output: "",
           results: [],
           reportedDisables: [],
+          cwd: "/fake/cwd",
         });
       });
 
