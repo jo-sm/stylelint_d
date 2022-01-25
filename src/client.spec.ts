@@ -1,5 +1,3 @@
-import { mocked } from "ts-jest/utils";
-
 import { Command } from "./types";
 import { version as packageVersion } from "../package.json";
 import * as _utils from "./utils";
@@ -14,7 +12,7 @@ jest.mock("./utils", () => ({
   daemonRunning: jest.fn(),
 }));
 
-const utils = mocked(_utils);
+const utils = jest.mocked(_utils);
 const MockedSocket = Socket as jest.MockedClass<typeof Socket>;
 
 describe("client", () => {
