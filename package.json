@@ -4,7 +4,7 @@
   "description": "Long running Stylelint daemon",
   "bin": "dist/bin/stylelint_d.js",
   "dependencies": {
-    "glob": "^7.0.5",
+    "glob": "^8.0.1",
     "lodash.camelcase": "^4.3.0",
     "minimist": "^1.2.0",
     "node-pty": "^0.10.1",
