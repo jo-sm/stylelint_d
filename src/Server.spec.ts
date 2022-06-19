@@ -361,6 +361,8 @@ describe("Server", () => {
               {
                 line: 2,
                 column: 10,
+                endLine: 2,
+                endColumn: 13,
                 rule: "color-no-invalid-hex",
                 severity: "error",
                 text: `Unexpected invalid hex color "#ff" (color-no-invalid-hex)`,
