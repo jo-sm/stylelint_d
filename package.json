@@ -24,7 +24,7 @@
     "@typescript-eslint/parser": "^5.2.0",
     "eslint": "^8.1.0",
     "eslint_d": "^12.0.0",
-    "eslint-plugin-jest": "^26.0.0",
+    "eslint-plugin-jest": "^27.1.1",
     "jest": "^27.4.7",
     "prettier": "^2.2.1",
     "stylelint-config-recommended": "^8.0.0",
