@@ -1,7 +1,7 @@
 import net from "net";
 import path from "path";
 import resolve from "resolve";
-import glob from "glob";
+import { globIterate } from "glob";
 import { LinterResult } from "stylelint";
 import { Socket } from "./Socket";
 import { LintRequest, Request, Command, Response, LintArguments } from "./types";
@@ -188,25 +188,26 @@ export class Server {
     if (lintArguments.configFile) {
       lintResolveBasedir = path.dirname(lintArguments.configFile);
     } else if (lintArguments.files) {
-      // Take the first given file. If it's a glob, get the path of the glob. Otherwise,
-      // make it absolute to cwd if it isn't absolute.
+      // Take the first given file.
+      //
+      // If it's a glob, treat it as a glob. If it resolves to any file, take the first file's
+      // (absolute) path, and consider that the baseDir for stylelint. If it doesn't resolve to any
+      // file then use `clientCwd`.
+      //
+      // If it's a file, use it and make it absolute to cwd if it isn't absolute.
       const fileOrGlob: string = lintArguments.files[0];
 
       if (fileOrGlob.match(/\*/)) {
-        const folderGlob = new glob.Glob(fileOrGlob);
+        const folderGlob = globIterate(fileOrGlob, { ignore: "node_modules/**", absolute: true });
 
-        lintResolveBasedir = folderGlob.minimatch.set[0]
-          .reduce<string[]>((memo, i) => {
-            if (typeof i === "string") {
-              memo.push(i);
-            }
+        // If we don't find a file (i.e. value is undefined), the glob didn't match anything. Although we could bail
+        // out early here, let's let `stylelint` handle it instead in case it has some defaults that we don't.
+        const foundFile = (await folderGlob.next()).value;
 
-            return memo;
-          }, [])
-          .join("/");
-
-        if (!path.isAbsolute(lintResolveBasedir)) {
-          lintResolveBasedir = path.resolve(clientCwd, lintResolveBasedir);
+        if (foundFile) {
+          lintResolveBasedir = path.dirname(foundFile);
+        } else {
+          lintResolveBasedir = clientCwd;
         }
       } else if (path.isAbsolute(fileOrGlob)) {
         lintResolveBasedir = path.dirname(fileOrGlob);
