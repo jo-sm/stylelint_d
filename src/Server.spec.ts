@@ -1,5 +1,6 @@
 import net from "net";
 import resolve from "resolve";
+import { globSync } from "glob";
 import stylelint from "stylelint";
 import { Server } from "./Server";
 import { Socket } from "./Socket";
@@ -187,29 +188,34 @@ describe("Server", () => {
           expect(resolve.sync).toHaveBeenCalledWith("stylelint", { basedir: "/path/to/config" });
         });
 
-        it("should get the path from a given glob", async () => {
+        it("should treat the first file as a glob and get its path, if it resolves to a file", async () => {
+          const files = ["**/*.css"];
+          const expectedBaseDir = path.dirname(globSync(files[0], { absolute: true })[0]);
+
           await setup({
             command: Command.LINT,
             lintArguments: {
-              files: ["./some/path/**/*"],
-            },
-            cwd: "/the/cwd",
-          });
-
-          expect(resolve.sync).toHaveBeenCalledWith("stylelint", { basedir: "/the/cwd/some/path" });
-        });
-
-        it("should handle absolute path globs if given", async () => {
-          await setup({
-            command: Command.LINT,
-            lintArguments: {
-              files: ["/some/absolute/path/**/*"],
+              files,
             },
             cwd: "/the/cwd",
           });
 
           expect(resolve.sync).toHaveBeenCalledWith("stylelint", {
-            basedir: "/some/absolute/path",
+            basedir: expectedBaseDir,
+          });
+        });
+
+        it("should default to the provided `cwd` if the first file in the glob doesn't match anything", async () => {
+          await setup({
+            command: Command.LINT,
+            lintArguments: {
+              files: ["something/fake/**/*.css"],
+            },
+            cwd: "/the/cwd",
+          });
+
+          expect(resolve.sync).toHaveBeenCalledWith("stylelint", {
+            basedir: "/the/cwd",
           });
         });
 
