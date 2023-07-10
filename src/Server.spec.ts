@@ -150,7 +150,7 @@ describe("Server", () => {
           },
           (server) => {
             server.on("restart", handleRestart);
-          }
+          },
         );
 
         expect(handleRestart).toHaveBeenCalledTimes(1);

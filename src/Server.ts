@@ -24,7 +24,7 @@ export class Server {
    * @returns a new net.Server instance
    */
   private static createInstance(
-    handleConnection: typeof Server.prototype.handleConnection
+    handleConnection: typeof Server.prototype.handleConnection,
   ): net.Server {
     const instance = net.createServer({ allowHalfOpen: true }, handleConnection);
 
