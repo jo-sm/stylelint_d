@@ -169,7 +169,7 @@ export async function client(argv: string[]): Promise<ClientResult> {
         } catch {
           lintArguments.customFormatter = path.resolve(
             process.cwd(),
-            lintArguments.customFormatter
+            lintArguments.customFormatter,
           );
         }
       }
@@ -185,7 +185,7 @@ export async function client(argv: string[]): Promise<ClientResult> {
 
 async function handleCommand(
   command: Command,
-  lintArguments: LintArguments
+  lintArguments: LintArguments,
 ): Promise<ClientResult> {
   if (command === Command.HELP) {
     return {
