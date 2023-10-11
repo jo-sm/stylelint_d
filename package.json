@@ -13,7 +13,7 @@
   },
   "devDependencies": {
     "@actions/core": "^1.3.0",
-    "@actions/github": "^5.0.0",
+    "@actions/github": "^6.0.0",
     "@tsconfig/node12": "^12.1.0",
     "@types/glob": "^8.0.0",
     "@types/jest": "^27.0.0",
