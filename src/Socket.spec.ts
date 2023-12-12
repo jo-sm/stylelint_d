@@ -2,19 +2,23 @@ import net from "net";
 import { Socket } from "./Socket";
 import * as utils from "./utils";
 
+jest.mock("./utils", () => ({
+  ...jest.requireActual("./utils"),
+  getNetSocket: jest.fn(),
+}));
+
 const wait = () => new Promise((resolve) => process.nextTick(resolve));
 
 // {} in JSON
 const mockJSONBuffer = Buffer.from("e30=");
 
 describe("Socket", () => {
-  let getNetSocketSpy: jest.SpyInstance;
+  let getNetSocketSpy: jest.Mock;
   let eventHandlers: any = {};
 
   beforeEach(() => {
-    getNetSocketSpy = jest
-      .spyOn(utils, "getNetSocket")
-      .mockImplementation((): Promise<net.Socket> => {
+    getNetSocketSpy = (utils.getNetSocket as unknown as jest.Mock).mockImplementation(
+      (): Promise<net.Socket> => {
         const result: any = {
           on: jest.fn((eventName: string, cb: any) => {
             eventHandlers[eventName] = cb;
@@ -25,7 +29,8 @@ describe("Socket", () => {
         } as unknown as net.Socket;
 
         return Promise.resolve(result);
-      });
+      },
+    );
   });
 
   afterEach(() => {
