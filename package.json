@@ -23,7 +23,7 @@
     "@types/node": "^20.1.0",
     "@types/resolve": "^1.17.1",
     "@typescript-eslint/eslint-plugin": "^7.0.0",
-    "@typescript-eslint/parser": "^6.2.1",
+    "@typescript-eslint/parser": "^7.0.2",
     "eslint": "^8.1.0",
     "eslint_d": "^13.0.0",
     "eslint-plugin-jest": "^27.2.1",
